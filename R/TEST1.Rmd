@@ -1,0 +1,41 @@
+---
+title: "TEST1"
+author: "Bryce Butler"
+date: "2024-10-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load the MTBE dataset
+mtbe_data <- read.csv("MTBE.csv")
+
+# Check for missing values in WellClass and Aquifer columns
+sum(is.na(mtbe_data$WellClass))  # Check for missing values in WellClass
+sum(is.na(mtbe_data$Aquifer))    # Check for missing values in Aquifer
+
+# Remove rows where either WellClass or Aquifer have missing values
+mtbe_data_clean <- mtbe_data[!is.na(mtbe_data$WellClass) & !is.na(mtbe_data$Aquifer), ]
+
+# Create a contingency table for WellClass (Public/Private) and Aquifer (Bedrock/Unconsolidated)
+table_data <- table(mtbe_data_clean$WellClass, mtbe_data_clean$Aquifer)
+
+# Inspect the table to verify row and column names
+print(table_data)
+
+# Question 1: Calculate P(Public | Bedrock)
+P_Public_given_BedRock <- table_data["Public", "Bedrock"] / sum(table_data[, "Bedrock"])
+
+# Display the result for Question 1 rounded to 4 decimal places
+cat("P(Public | Bedrock):", round(P_Public_given_BedRock, 4), "\n")
+
+# Question 2: Calculate P(Public)
+P_Public <- sum(table_data["Public", ]) / sum(table_data)
+
+# Display the result for Question 2 rounded to 4 decimal places
+cat("P(Public):", round(P_Public, 4), "\n")
+
+```

@@ -1,0 +1,64 @@
+---
+title: "Project1"
+author: "Bryce Butler"
+date: "2024-10-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Ntickets function
+```{r}
+ntickets <- function(N = 400, gamma = 0.02, p = 0.95) {
+  n <- seq(N, floor(N + N/10), by = 1)
+
+    # Calculate the temporary values using the binomial distribution (discrete case)
+  tmp_discrete <- 1 - gamma - pbinom(q = N, size = n, prob = p)
+
+  # Find the index of the minimum absolute difference for discrete case
+  ind_discrete <- which.min(abs(tmp_discrete))
+
+  # Calculate the normal approximation for the continuous case
+ mu <- N * p
+ 
+  sigma <- sqrt(N * p * (1 - p))
+  tmp_continuous <- 1 - gamma - pnorm(n, mean = mu, sd = sigma)
+  
+
+  # Find the index of the minimum absolute difference for continuous case
+  ind_continuous <- which.min(abs(tmp_continuous))
+
+  
+    # Plot for discrete case
+    plot(n, tmp_discrete, type = "b", col = "blue", lwd = 1.5,
+         main = paste("Objective vs n to Find Optimal Tickets Sold\n", "Discrete"),
+         xlab = "n", ylab = "Objective (Discrete)")
+    abline(h = 0, col = "red")
+    abline(v = n[ind_discrete], col = "blue", lwd = 1.5)
+
+    # Plot for continuous case (on a new plot)
+    plot(n, tmp_continuous, type = "b", col = "green", lwd = 1.5,
+         main = paste("Objective vs n to Find Optimal Tickets Sold\n", "Continuous"),
+         xlab = "n", ylab = "Objective (Continuous)")
+    abline(h = 0, col = "red")
+    abline(v = n[ind_continuous], col = "green", lwd = 1.5)
+  
+   
+
+  # Return the results as a list
+  return(list(nd = n[ind_discrete], nc = n[ind_continuous], N = N, p = p, gamma = gamma))
+}
+
+
+```
+# Test the function with the provided values
+```{r}
+ntickets(N = 400, gamma = 0.25)
+
+```
+
+```{r}
+
+ntickets(N = 200, gamma = 0.02, p = 0.95)
+```

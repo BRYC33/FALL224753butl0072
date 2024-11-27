@@ -1,0 +1,353 @@
+---
+title: "Lab10"
+author: "Bryce Butler"
+date: "2024-11-01"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    css: "custom.css"
+    theme: darkly
+    highlight: tango
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(FALL224753butl0072)
+load("~/Downloads/PROJECTS/FALL224753butl0072/data/mpg_data.rda")
+
+```
+
+
+
+```{r}
+# Define log likelihood functions
+logbin <- function(x, param) log(dbinom(x, prob = param, size = 10))
+logpoiss <- function(x, param) log(dpois(x, lambda = param))
+logexp <- function(x, param) log(dexp(x, rate = param))
+```
+
+# Task 1 
+```{r}
+getwd()
+```
+
+# Task 2
+
+
+
+The likelihood formula for a binomial distribution with parameter \( p \) is:
+
+$$
+L(p) = \prod_{i=1}^{k} \binom{n}{y_i} p^{y_i} (1 - p)^{n - y_i}
+$$
+
+Taking the natural log of the likelihood, we get the log likelihood:
+
+$$
+\log L(p) = \sum_{i=1}^{k} \left( y_i \log(p) + (n - y_i) \log(1 - p) \right)
+$$
+```{r}
+# Define the log likelihood function for the binomial distribution
+logbin <- function(x, param) log(dbinom(x, size = 20, prob = param))
+
+# Data for the binomial experiment
+data_binomial <- c(3, 3, 4, 3, 4, 5, 5, 4)
+
+# Define the mymaxlik function if not already defined
+mymaxlik <- function(lfun, x, param, ...) {
+  np <- length(param)
+  z <- outer(x, param, lfun)  # Line A
+  y <- apply(z, 2, sum)       # Sum log-likelihoods across rows
+  
+  # Plot the log-likelihood function
+  plot(param, y, col = "Blue", type = "l", lwd = 2, ...)
+  i <- max(which(y == max(y)))  # Line B
+  abline(v = param[i], lwd = 2, col = "Red")
+  points(param[i], y[i], pch = 19, cex = 1.5, col = "Black")
+  axis(3, param[i], round(param[i], 2))
+  
+  return(list(i = i, parami = param[i], yi = y[i]))
+}
+
+# Define a range for the probability parameter p
+p_values <- seq(0, 1, length = 1000)
+
+# Find and plot the maximum likelihood estimate for p
+mle_result <- mymaxlik(logbin, data_binomial, p_values, xlab = expression(p), main = "Binomial MLE for p")
+
+# Display the estimated probability p
+print(paste("The maximum likelihood estimate for p is:", round(mle_result$parami, 4)))
+
+```
+
+# Task 3 
+
+
+The likelihood formula for a Poisson distribution with parameter \( \lambda \) is:
+
+$$
+L(\lambda) = \prod_{i=1}^{k} \frac{\lambda^{y_i} e^{-\lambda}}{y_i!}
+$$
+
+Taking the natural log of the likelihood, we obtain the log likelihood:
+
+$$
+\log L(\lambda) = \sum_{i=1}^{k} \left( y_i \log(\lambda) - \lambda - \log(y_i!) \right)
+$$
+```{r}
+# Define the log likelihood function for the Poisson distribution
+logpoiss <- function(x, param) log(dpois(x, lambda = param))
+
+# Data for the Poisson experiment
+data_poisson <- c(4, 6, 7, 6, 5)
+
+# Use mymaxlik to find and plot the maximum likelihood estimate for lambda
+mle_lambda <- mymaxlik(logpoiss, data_poisson, seq(0, 15, length = 1000), xlab = expression(lambda), main = "Poisson MLE for lambda")
+
+# Display the estimated lambda
+print(paste("The maximum likelihood estimate for lambda is:", round(mle_lambda$parami, 4)))
+
+# Define the myNRML function to refine the solution using Newton-Raphson
+myNRML <- function(x0, delta = 0.001, llik, xrange, parameter = "param") {
+  f <- function(x) (llik(x + delta) - llik(x)) / delta
+  fdash <- function(x) (f(x + delta) - f(x)) / delta
+  d <- 1000
+  i <- 0
+  x <- c(x0)
+  y <- c(f(x0))
+  
+  while (d > delta & i < 100) {
+    i <- i + 1
+    x <- c(x, x[i] - f(x[i]) / fdash(x[i]))
+    y <- c(y, f(x[i + 1]))
+    d <- abs(y[i + 1])
+  }
+  
+  plot(x, y, type = "l", main = "Newton-Raphson Convergence for lambda", xlab = parameter, ylab = "Likelihood Derivative")
+  abline(h = 0, col = "red")
+  points(x[i + 1], y[i + 1], col = "blue", pch = 19)
+  
+  return(list(estimate = x[i + 1], iterations = i))
+}
+
+# Define the log likelihood function specifically for Newton-Raphson
+log_likelihood_lambda <- function(lambda) {
+  sum(data_poisson * log(lambda) - lambda - log(factorial(data_poisson)))
+}
+
+# Use myNRML to refine the estimate of lambda
+refined_lambda <- myNRML(x0 = mle_lambda$parami, delta = 0.0001, llik = log_likelihood_lambda, xrange = c(0, 15), parameter = "lambda")
+
+# Display the refined MLE for lambda
+print(paste("The refined maximum likelihood estimate for lambda is:", round(refined_lambda$estimate, 4)))
+
+```
+
+
+# Task 4 
+```{r}
+# Define the log likelihood function for the combined binomial experiments
+logbin_combined <- function(p) {
+  log(dbinom(2, size = 6, prob = p)) + log(dbinom(4, size = 10, prob = p))
+}
+
+
+mymaxlikg <- function(lfun, theta) {
+  nth <- length(theta)
+  thmat <- matrix(theta, nr = nth, nc = 1, byrow = TRUE)
+  z <- apply(thmat, 1, lfun)
+  zmax <- max(which(z == max(z)))
+  plot(theta, exp(z), type = "l", col = "Blue", lwd = 2, xlab = expression(p), ylab = "Likelihood")
+  abline(v = theta[zmax], col = "Red")
+  axis(3, theta[zmax], round(theta[zmax], 4), col = "Red")
+  
+  return(theta[zmax])
+}
+
+# Define the range for the parameter p
+p_values <- seq(0, 1, length = 1000)
+
+# Find and plot the maximum likelihood estimate for p
+mle_p <- mymaxlikg(logbin_combined, p_values)
+
+# Display the estimated probability p
+print(paste("The maximum likelihood estimate for p is:", round(mle_p, 4)))
+
+```
+
+
+# Task 5
+```{r}
+# Define the log likelihood function for the joint density (binomial and Poisson)
+log_joint_density <- function(theta1, theta2) {
+  y1 <- 4  # Number of successes in the binomial
+  n <- 20  # Number of trials in the binomial
+  y2 <- 4  # Observed count in the Poisson
+  
+  log(dbinom(y1, size = n, prob = theta1)) + log(dpois(y2, lambda = theta2))
+}
+
+
+maxlikg2 <- function(theta1, theta2, lfun, ...) {
+  n1 <- length(theta1)
+  n2 <- length(theta2)
+  z <- outer(theta1, theta2, Vectorize(lfun))  # Vectorize to apply over grids
+  contour(theta1, theta2, exp(z), col = "Blue", lwd = 2, xlab = expression(theta[1]), ylab = expression(theta[2]), ...)
+  
+  maxl <- max(exp(z))  # Max likelihood value
+  coord <- which(exp(z) == maxl, arr.ind = TRUE)
+  
+  th1est <- theta1[coord[1]]
+  th2est <- theta2[coord[2]]
+  
+  # Plot MLE point
+  points(th1est, th2est, pch = 19, col = "Red")
+  axis(3, at = th1est, labels = round(th1est, 4), col = "Red")
+  axis(4, at = th2est, labels = round(th2est, 4), col = "Red")
+  
+  return(list(th1est = th1est, th2est = th2est, max_likelihood = maxl))
+}
+
+# Define the ranges for the parameters theta1 (for binomial) and theta2 (for Poisson)
+theta1_values <- seq(0, 1, length = 100)  # Probability range for binomial
+theta2_values <- seq(0, 10, length = 100) # Rate range for Poisson
+
+# Find and plot the maximum likelihood estimates for theta1 and theta2
+mle_results <- maxlikg2(theta1_values, theta2_values, lfun = log_joint_density)
+
+# Display the estimated values of theta1 and theta2
+print(paste("The maximum likelihood estimate for theta1 is:", round(mle_results$th1est, 4)))
+print(paste("The maximum likelihood estimate for theta2 is:", round(mle_results$th2est, 4)))
+
+```
+
+
+# Task 6 
+```{r}
+# Provided data
+y <- c(10, 12, 13, 15, 12, 11, 10)
+
+
+mymlnorm <- function(x, mu, sig, ...) {
+  nmu <- length(mu)
+  nsig <- length(sig)
+  zz <- c()
+  lfun <- function(x, m, p) log(dnorm(x, mean = m, sd = p))
+  
+  for (j in 1:nsig) {
+    z <- outer(x, mu, lfun, p = sig[j])
+    y <- apply(z, 2, sum)
+    zz <- cbind(zz, y)
+  }
+  
+  maxl <- max(exp(zz))
+  coord <- which(exp(zz) == maxl, arr.ind = TRUE)
+  
+  # Plot the likelihood surface
+  contour(mu, sig, exp(zz), las = 3, xlab = expression(mu), ylab = expression(sigma), axes = TRUE, 
+          main = expression(paste("L(", mu, ",", sigma, ")", sep = "")), ...)
+  
+  # Mark the MLE on the plot
+  muest <- mu[coord[1]]
+  sigest <- sig[coord[2]]
+  abline(v = muest, h = sigest, col = "Red")
+  points(muest, sigest, pch = 19, col = "Red")
+  
+  return(list(muest = muest, sigest = sigest, max_likelihood = maxl))
+}
+
+# Define the range for mu and sigma
+mu_values <- seq(8, 16, length = 100)   # Range for mean
+sigma_values <- seq(0.1, 5, length = 100)  # Range for standard deviation
+
+# Find and plot the maximum likelihood estimates for mu and sigma
+mle_results <- mymlnorm(y, mu = mu_values, sig = sigma_values, lwd = 2, labcex = 1)
+
+# Display the estimated values of mu and sigma
+print(paste("The maximum likelihood estimate for mu is:", round(mle_results$muest, 4)))
+print(paste("The maximum likelihood estimate for sigma is:", round(mle_results$sigest, 4)))
+
+```
+
+
+# Task 7 
+```{r}
+# Generate the initial sample from a Beta distribution with known parameters
+set.seed(123)  # Set a seed for reproducibility
+sam <- rbeta(30, shape1 = 3, shape2 = 4)
+
+mymlbeta <- function(x, alpha, beta, ...) {
+  na <- length(alpha)
+  nb <- length(beta)
+  zz <- c()
+  lfun <- function(x, a, b) log(dbeta(x, shape1 = a, shape2 = b))
+  
+  for (j in 1:nb) {
+    z <- outer(x, alpha, lfun, b = beta[j])
+    y <- apply(z, 2, sum)
+    zz <- cbind(zz, y)
+  }
+  
+  maxl <- max(exp(zz))
+  coord <- which(exp(zz) == maxl, arr.ind = TRUE)
+  aest <- alpha[coord[1]]
+  best <- beta[coord[2]]
+  
+  # Plot the likelihood surface
+  contour(alpha, beta, exp(zz), las = 3, xlab = expression(alpha), ylab = expression(beta), axes = TRUE,
+          main = expression(paste("L(", alpha, ",", beta, ")", sep = "")), ...)
+  abline(v = aest, h = best)
+  points(aest, best, pch = 19)
+  axis(4, best, round(best, 2), col = "Red")
+  axis(3, aest, round(aest, 2), col = "Red")
+  
+  return(list(aest = aest, best = best, max_likelihood = maxl))
+}
+
+# Define parameter ranges for the grid search
+alpha_values <- seq(1, 5, length = 100)  # Range for alpha (shape1)
+beta_values <- seq(2, 6, length = 100)   # Range for beta (shape2)
+
+# Set up the plotting area for 12 plots on the same graphical device
+par(mfrow = c(3, 4))  # 3 rows, 4 columns
+
+# Resampling and plotting
+results <- matrix(NA, nrow = 12, ncol = 2)  # To store the estimates for alpha and beta
+for (i in 1:12) {
+  # Resample from the initial sample
+  resample <- sample(sam, length(sam), replace = TRUE)
+  
+  # Get MLE for resampled data and plot
+  mle_results <- mymlbeta(resample, alpha = alpha_values, beta = beta_values, col = "steelblue")
+  points(3, 4, col = "Red", pch = 19)  # Plot the true parameter values as a reference
+  abline(v = 3, h = 4, col = "Red")   # Draw lines at the true values
+  
+  # Store the estimates
+  results[i, ] <- c(mle_results$aest, mle_results$best)
+}
+
+# Calculate distances between estimates and known values (3 and 4)
+true_values <- c(3, 4)
+distances <- apply(results - true_values, 1, function(x) sqrt(sum(x^2)))
+
+# Plot the distances
+par(mfrow = c(1, 1))  # Reset to single plot
+plot(distances, type = "b", pch = 19, col = "purple",
+     main = "Distances Between Estimates and True Values",
+     xlab = "Resample Number", ylab = "Distance")
+
+```
+
+
+# Task 8 
+```{r}
+# Define a log likelihood function 
+loglik_mpg <- function(x, param) dnorm(x, mean = param, sd = 1, log = TRUE)
+
+# Run mymaxlik() on mpg_data$MPG
+mpglike <- FALL224753butl0072::mymaxlik(loglik_mpg, mpg_data$MPG, param = seq(15, 30, length = 100))
+mpglike
+```
+
+

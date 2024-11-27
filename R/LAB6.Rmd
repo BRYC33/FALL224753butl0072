@@ -1,0 +1,238 @@
+---
+title: "Lab6"
+author: "Bryce Butler"
+date: "2024-10-04"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: spacelab
+    highlight: pygments
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1
+```{r}
+
+getwd()
+```
+# Task 2
+```{r}
+# Task 2: Plotting normal curves and calculating probabilities
+
+# We are plotting 4 normal distributions with different parameters.
+
+# Setting up the layout for 4 plots (2x2 grid)
+layout(matrix(1:4, nrow = 2, ncol = 2))
+
+# Plot 1: Normal distribution with μ=10, σ=4
+curve(dnorm(x, mean = 10, sd = 4), from = -10, to = 30, 
+      main = "μ=10, σ=4", xlim = c(-10, 30))
+
+# Plot 2: Normal distribution with μ=10, σ=2
+curve(dnorm(x, mean = 10, sd = 2), from = 0, to = 20, 
+      main = "μ=10, σ=2", xlim = c(0, 20))
+
+# Plot 3: Normal distribution with μ=5, σ=10
+curve(dnorm(x, mean = 5, sd = 10), from = -25, to = 35, 
+      main = "μ=5, σ=10", xlim = c(-25, 35))
+
+# Plot 4: Normal distribution with μ=5, σ=1/2
+curve(dnorm(x, mean = 5, sd = 1/2), from = 3, to = 7, 
+      main = "μ=5, σ=1/2", xlim = c(3, 7))
+
+# Now calculating the probabilities for different normal distributions and adding text
+
+# Probability calculations:
+# Y ∼ N(0,1), P(Y ≥ 2)
+p1 <- 1 - pnorm(2, mean = 0, sd = 1)
+
+# Y ∼ N(μ=4,σ=2), P(1 ≤ Y < 5)
+p2 <- pnorm(5, mean = 4, sd = 2) - pnorm(1, mean = 4, sd = 2)
+
+# Y ∼ N(μ=10,σ=4), P(Y < 10)
+p3 <- pnorm(10, mean = 10, sd = 4)
+
+# Y ∼ N(μ=-2,σ=1/2), P(-3 < Y ≤ -2)
+p4 <- pnorm(-2, mean = -2, sd = 1/2) - pnorm(-3, mean = -2, sd = 1/2)
+
+# Print probabilities rounded to four decimal places
+cat("P(Y ≥ 2) for N(0,1):", round(p1, 4), "\n")
+cat("P(1 ≤ Y < 5) for N(4,2):", round(p2, 4), "\n")
+cat("P(Y < 10) for N(10,4):", round(p3, 4), "\n")
+cat("P(-3 < Y ≤ -2) for N(-2,1/2):", round(p4, 4), "\n")
+
+
+```
+# Task 3
+```{r}
+# Overlaying plots on the same surface
+# Gamma distribution with shape=1, scale=1
+curve(dgamma(x, shape = 1, scale = 1), from = 0, to = 15, 
+      col = "red", lwd = 2, ylab = "Density", main = "Gamma Distributions")
+
+# Gamma distribution with shape=3, scale=1
+curve(dgamma(x, shape = 3, scale = 1), from = 0, to = 15, 
+      col = "blue", lwd = 2, add = TRUE)
+
+# Gamma distribution with shape=5, scale=1
+curve(dgamma(x, shape = 5, scale = 1), from = 0, to = 15, 
+      col = "green", lwd = 2, add = TRUE)
+
+# Adding a legend to differentiate between the distributions
+legend("topright", legend = c("Shape=1, Scale=1", "Shape=3, Scale=1", "Shape=5, Scale=1"),
+       col = c("red", "blue", "green"), lwd = 2)
+
+# Now calculating the probabilities for different gamma distributions
+
+# Y ~ Gamma(shape=3, scale=2), P(2 < Y < 5)
+p1 <- pgamma(5, shape = 3, scale = 2) - pgamma(2, shape = 3, scale = 2)
+
+# Y ~ Gamma(shape=6, scale=3), P(1 ≤ Y ≤ 4)
+p2 <- pgamma(4, shape = 6, scale = 3) - pgamma(1, shape = 6, scale = 3)
+
+# Y ~ Gamma(shape=2, scale=4), P(3 ≤ Y < 6)
+p3 <- pgamma(6, shape = 2, scale = 4) - pgamma(3, shape = 2, scale = 4)
+
+# Print probabilities rounded to four decimal places
+cat("P(2 < Y < 5) for Gamma(3,2):", round(p1, 4), "\n")
+cat("P(1 ≤ Y ≤ 4) for Gamma(6,3):", round(p2, 4), "\n")
+cat("P(3 ≤ Y < 6) for Gamma(2,4):", round(p3, 4), "\n")
+
+
+```
+
+# Task 4
+```{r}
+# Setting up the layout for 4 plots (2x2 grid)
+layout(matrix(1:4, nrow = 2, ncol = 2))
+
+# Plot 1: Chi-square distribution with df=1
+curve(dchisq(x, df = 1), from = 0, to = 10, 
+      main = "Chi-square df=1", xlim = c(0, 10))
+
+# Plot 2: Chi-square distribution with df=2
+curve(dchisq(x, df = 2), from = 0, to = 10, 
+      main = "Chi-square df=2", xlim = c(0, 10))
+
+# Plot 3: Chi-square distribution with df=4
+curve(dchisq(x, df = 4), from = 0, to = 15, 
+      main = "Chi-square df=4", xlim = c(0, 15))
+
+# Plot 4: Chi-square distribution with df=20
+curve(dchisq(x, df = 20), from = 0, to = 50, 
+      main = "Chi-square df=20", xlim = c(0, 50))
+
+# Now calculating the probabilities for different chi-square distributions
+
+# Y ~ Chi-square(df=2), P(2 ≤ Y ≤ 4)
+p1 <- pchisq(4, df = 2) - pchisq(2, df = 2)
+
+# Y ~ Chi-square(df=3), P(3 ≤ Y ≤ 5)
+p2 <- pchisq(5, df = 3) - pchisq(3, df = 3)
+
+# Y ~ Chi-square(df=20), P(10 < Y ≤ 21)
+p3 <- pchisq(21, df = 20) - pchisq(10, df = 20)
+
+# Print probabilities rounded to four decimal places
+cat("P(2 ≤ Y ≤ 4) for Chi-square(df=2):", round(p1, 4), "\n")
+cat("P(3 ≤ Y ≤ 5) for Chi-square(df=3):", round(p2, 4), "\n")
+cat("P(10 < Y ≤ 21) for Chi-square(df=20):", round(p3, 4), "\n")
+
+```
+
+# Task 5
+```{r}
+# Setting up the layout for 4 plots (2x2 grid)
+layout(matrix(1:4, nrow = 2, ncol = 2))
+
+# Plot 1: Weibull distribution with shape=1, scale=1
+curve(dweibull(x, shape = 1, scale = 1), from = 0, to = 5, 
+      main = "Weibull shape=1, scale=1", xlim = c(0, 5))
+
+# Plot 2: Weibull distribution with shape=2, scale=2
+curve(dweibull(x, shape = 2, scale = 2), from = 0, to = 6, 
+      main = "Weibull shape=2, scale=2", xlim = c(0, 6))
+
+# Plot 3: Weibull distribution with shape=3, scale=1.5
+curve(dweibull(x, shape = 3, scale = 1.5), from = 0, to = 6, 
+      main = "Weibull shape=3, scale=1.5", xlim = c(0, 6))
+
+# Plot 4: Weibull distribution with shape=0.5, scale=3
+curve(dweibull(x, shape = 0.5, scale = 3), from = 0, to = 10, 
+      main = "Weibull shape=0.5, scale=3", xlim = c(0, 10))
+
+# Now calculating the probabilities for different Weibull distributions
+
+# Probability 1: P(1 < Y < 3) for Weibull(shape=2, scale=2)
+p1 <- pweibull(3, shape = 2, scale = 2) - pweibull(1, shape = 2, scale = 2)
+
+# Probability 2: P(2 ≤ Y ≤ 5) for Weibull(shape=3, scale=1.5)
+p2 <- pweibull(5, shape = 3, scale = 1.5) - pweibull(2, shape = 3, scale = 1.5)
+
+# Probability 3: P(0 < Y < 4) for Weibull(shape=1, scale=1)
+p3 <- pweibull(4, shape = 1, scale = 1)
+
+# Print probabilities rounded to four decimal places
+cat("P(1 < Y < 3) for Weibull(shape=2, scale=2):", round(p1, 4), "\n")
+cat("P(2 ≤ Y ≤ 5) for Weibull(shape=3, scale=1.5):", round(p2, 4), "\n")
+cat("P(0 < Y < 4) for Weibull(shape=1, scale=1):", round(p3, 4), "\n")
+
+```
+
+
+# Task 6 
+```{r}
+# Setting up the layout for 4 plots (2x2 grid)
+layout(matrix(1:4, nrow = 2, ncol = 2))
+
+# Plot 1: Beta distribution with shape1=2, shape2=5
+curve(dbeta(x, shape1 = 2, shape2 = 5), from = 0, to = 1, 
+      main = "Beta shape1=2, shape2=5", xlim = c(0, 1))
+
+# Plot 2: Beta distribution with shape1=5, shape2=2
+curve(dbeta(x, shape1 = 5, shape2 = 2), from = 0, to = 1, 
+      main = "Beta shape1=5, shape2=2", xlim = c(0, 1))
+
+# Plot 3: Beta distribution with shape1=3, shape2=3
+curve(dbeta(x, shape1 = 3, shape2 = 3), from = 0, to = 1, 
+      main = "Beta shape1=3, shape2=3", xlim = c(0, 1))
+
+# Plot 4: Beta distribution with shape1=2, shape2=2
+curve(dbeta(x, shape1 = 2, shape2 = 2), from = 0, to = 1, 
+      main = "Beta shape1=2, shape2=2", xlim = c(0, 1))
+
+# Now calculating the probabilities for different Beta distributions
+
+# Probability 1: P(0.2 < Y < 0.5) for Beta(shape1=2, shape2=5)
+p1 <- pbeta(0.5, shape1 = 2, shape2 = 5) - pbeta(0.2, shape1 = 2, shape2 = 5)
+
+# Probability 2: P(0.4 ≤ Y ≤ 0.7) for Beta(shape1=5, shape2=2)
+p2 <- pbeta(0.7, shape1 = 5, shape2 = 2) - pbeta(0.4, shape1 = 5, shape2 = 2)
+
+# Probability 3: P(0 < Y < 0.3) for Beta(shape1=3, shape2=3)
+p3 <- pbeta(0.3, shape1 = 3, shape2 = 3)
+
+# Print probabilities rounded to four decimal places
+cat("P(0.2 < Y < 0.5) for Beta(shape1=2, shape2=5):", round(p1, 4), "\n")
+cat("P(0.4 ≤ Y ≤ 0.7) for Beta(shape1=5, shape2=2):", round(p2, 4), "\n")
+cat("P(0 < Y < 0.3) for Beta(shape1=3, shape2=3):", round(p3, 4), "\n")
+
+```
+
+
+# Task 7
+MyCurve being used through test_that. Execution results in Canvas comments. 
+```{r}
+
+
+# Call the mycurve function with parameters mu = 10, sigma = 5, and a = 6
+result <- FALL224753butl0072::mycurve(mu = 10, sigma = 5, a = 6)
+
+# Print the result (mu, sigma, probability)
+print(result)
+
+```

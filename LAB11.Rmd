@@ -1,0 +1,308 @@
+---
+title: "LAB11"
+author: "Bryce Butler"
+date: "2024-11-08"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    css: "custom.css"
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(FALL224753butl0072)
+```
+
+
+# Task 1 
+```{r}
+getwd()
+```
+
+# Task 2 
+
+The \( 95\% \) confidence interval for the mean \( \mu \) is:
+
+\[
+\bar{y} \pm t_{\frac{\alpha}{2}} \frac{s}{\sqrt{n}}
+\]
+
+
+
+The confidence interval for the population variance \( \sigma^2 \) is given by:
+
+\[
+\left( \frac{(n - 1)s^2}{\chi^2_{\frac{\alpha}{2}}}, \frac{(n - 1)s^2}{\chi^2_{1 - \frac{\alpha}{2}}} \right)
+\]
+
+
+```{r}
+# Sample data
+d <- c(5.0581, 4.9707, 5.0893, 4.9334, 4.9777, 5.0285, 4.8555, 4.9565,
+       4.9769, 4.9722, 4.999, 4.9925, 4.9686, 5.0662, 4.9239, 4.9781,
+       5.0485, 5.0014, 4.9957, 5.0195, 5.0118, 4.9928, 5.0361, 5.0185,
+       4.9879)
+
+# Confidence Intervals for the Mean
+mean_ci_95 <- t.test(d, conf.level = 0.95)$conf.int
+mean_ci_90 <- t.test(d, conf.level = 0.90)$conf.int
+mean_ci_80 <- t.test(d, conf.level = 0.80)$conf.int
+mean_ci_50 <- t.test(d, conf.level = 0.50)$conf.int
+
+# 80% CI using t.test and extracting values
+t_test_80 <- t.test(d, conf.level = 0.80)
+mean_ci_80_manual <- t_test_80$conf.int
+
+# Confidence Intervals for the Variance
+n <- length(d)
+s2 <- var(d)
+
+# Function to calculate variance CI
+variance_ci <- function(alpha) {
+  chi2_lower <- qchisq(alpha / 2, df = n - 1, lower.tail = FALSE)
+  chi2_upper <- qchisq(1 - alpha / 2, df = n - 1, lower.tail = FALSE)
+  lower <- ((n - 1) * s2) / chi2_lower
+  upper <- ((n - 1) * s2) / chi2_upper
+  return(c(lower, upper))
+}
+
+# Variance Confidence Intervals
+var_ci_95 <- variance_ci(0.05)
+var_ci_90 <- variance_ci(0.10)
+var_ci_80 <- variance_ci(0.20)
+var_ci_50 <- variance_ci(0.50)
+
+# Displaying Results
+cat("95% CI for the Mean:", mean_ci_95, "\n")
+cat("90% CI for the Mean:", mean_ci_90, "\n")
+cat("80% CI for the Mean:", mean_ci_80, "\n")
+cat("50% CI for the Mean:", mean_ci_50, "\n")
+
+cat("95% CI for the Variance:", var_ci_95, "\n")
+cat("90% CI for the Variance:", var_ci_90, "\n")
+cat("80% CI for the Variance:", var_ci_80, "\n")
+cat("50% CI for the Variance:", var_ci_50, "\n")
+```
+
+# Task 3 
+
+For large independent samples with \( n_1, n_2 \geq 30 \), the confidence interval for the difference in means \( \mu_1 - \mu_2 \) is:
+
+\[
+\bar{y}_1 - \bar{y}_2 \pm z_{\frac{\alpha}{2}} \sqrt{\frac{\sigma_1^2}{n_1} + \frac{\sigma_2^2}{n_2}}
+\]
+
+If we assume equal variances, the confidence interval becomes:
+
+\[
+\bar{y}_1 - \bar{y}_2 \pm z_{\frac{\alpha}{2}} \sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}
+\]
+
+For small sample sizes \( n_1 \) or \( n_2 < 30 \), and assuming equal variances \( \sigma_1 = \sigma_2 \), the confidence interval is:
+
+\[
+\bar{y}_1 - \bar{y}_2 \pm t_{\frac{\alpha}{2}, \, df} \sqrt{s_p^2 \left( \frac{1}{n_1} + \frac{1}{n_2} \right)}
+\]
+
+where \( s_p^2 \) is the pooled variance:
+
+\[
+s_p^2 = \frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}{n_1 + n_2 - 2}
+\]
+
+```{r}
+# Sample data
+snapper <- c(31.65, 27.48, 30.1, 31.57, 24.82, 29.17, 31.08, 28.23, 32.93,
+             25.66, 30.89, 31.66, 28.5, 30.59, 28.63)
+
+blue <- c(21.65, 17.48, 20.11, 21.57, 14.82, 19.17, 21.08, 18.23, 22.93,
+          15.66, 20.89, 21.66, 18.5, 20.59, 18.63, 18.91, 19.53, 17.7, 16.5, 19.03)
+
+# 95% Confidence Interval for difference in means (assuming equal variances)
+t_test_equal_var <- t.test(snapper, blue, var.equal = TRUE, conf.level = 0.95)
+ci_95 <- t_test_equal_var$conf.int
+
+# Practical interpretation
+cat("The 95% confidence interval for the difference in means (µ_snapper - µ_blue) is:",
+    round(ci_95[1], 4), "to", round(ci_95[2], 4), "\n")
+
+# Additional confidence intervals for different levels
+ci_85 <- t.test(snapper, blue, var.equal = TRUE, conf.level = 0.85)$conf.int
+ci_75 <- t.test(snapper, blue, var.equal = TRUE, conf.level = 0.75)$conf.int
+ci_25 <- t.test(snapper, blue, var.equal = TRUE, conf.level = 0.25)$conf.int
+
+# Displaying Results
+cat("85% CI for (µ_snapper - µ_blue):", round(ci_85[1], 4), "to", round(ci_85[2], 4), "\n")
+cat("75% CI for (µ_snapper - µ_blue):", round(ci_75[1], 4), "to", round(ci_75[2], 4), "\n")
+cat("25% CI for (µ_snapper - µ_blue):", round(ci_25[1], 4), "to", round(ci_25[2], 4), "\n")
+
+# Observing the effect of confidence level on interval width
+cat("As the confidence level decreases, the width of the confidence interval also decreases.\n")
+```
+
+
+# Task 4 
+
+
+For paired samples (dependent samples) with a large sample size \( n \geq 30 \), the confidence interval for the difference in means \( \mu_d = (\mu_1 - \mu_2) \) is:
+
+\[
+d \pm z_{\frac{\alpha}{2}} \frac{\sigma_d}{\sqrt{n}}
+\]
+
+For smaller sample sizes \( n < 30 \), the confidence interval is:
+
+\[
+d \pm t_{\frac{\alpha}{2}, \, n-1} \frac{s_d}{\sqrt{n}}
+\]
+
+where \( s_d \) is the sample standard deviation of the differences.
+
+
+```{r}
+# Sample data
+Exam1 <- c(40.98, 59.36, 46.69, 41.8, 61.63, 65.31, 62.96, 60.21, 56.89,
+           78.41, 53.44, 75.2, 60.54, 52.43, 41.41, 70.79, 73.55, 55.65,
+           61.43, 63.84, 58.07, 53.79, 54.45, 67.18, 44.60)
+
+Exam2 <- c(50.22, 66.19, 58.75, 51.88, 66.61, 70.86, 74.25, 70.23, 69.55,
+           87.18, 63.82, 81.7, 70.5, 66.02, 51.35, 80.92, 85.65, 65.44,
+           74.37, 75.82, 61.86, 59.92, 64.42, 73.57, 57.15)
+
+# Paired t-test for the difference (Exam2 - Exam1) with 95% CI
+t_test_95 <- t.test(Exam2, Exam1, paired = TRUE, conf.level = 0.95)
+ci_95 <- t_test_95$conf.int
+
+# Practical interpretation
+cat("The 95% confidence interval for the difference in means (µ_d = µ_Exam2 - µ_Exam1) is:",
+    round(ci_95[1], 4), "to", round(ci_95[2], 4), "\n")
+
+# Additional confidence intervals for different confidence levels
+ci_90 <- t.test(Exam2, Exam1, paired = TRUE, conf.level = 0.90)$conf.int
+ci_80 <- t.test(Exam2, Exam1, paired = TRUE, conf.level = 0.80)$conf.int
+ci_70 <- t.test(Exam2, Exam1, paired = TRUE, conf.level = 0.70)$conf.int
+ci_60 <- t.test(Exam2, Exam1, paired = TRUE, conf.level = 0.60)$conf.int
+ci_10 <- t.test(Exam2, Exam1, paired = TRUE, conf.level = 0.10)$conf.int
+
+# Displaying Results
+cat("90% CI for µ_d:", round(ci_90[1], 4), "to", round(ci_90[2], 4), "\n")
+cat("80% CI for µ_d:", round(ci_80[1], 4), "to", round(ci_80[2], 4), "\n")
+cat("70% CI for µ_d:", round(ci_70[1], 4), "to", round(ci_70[2], 4), "\n")
+cat("60% CI for µ_d:", round(ci_60[1], 4), "to", round(ci_60[2], 4), "\n")
+cat("10% CI for µ_d:", round(ci_10[1], 4), "to", round(ci_10[2], 4), "\n")
+
+# Observing the effect of confidence level on interval width
+cat("As the confidence level decreases, the width of the confidence interval also decreases.\n")
+```
+
+# Task 5
+
+For a single sample with \( n \geq 30 \), the confidence interval for a population proportion \( p \) is:
+
+\[
+\hat{p} \pm z_{\frac{\alpha}{2}} \sqrt{\frac{\hat{p}(1 - \hat{p})}{n}}
+\]
+
+For two independent samples with large sample sizes \( n_1, n_2 \geq 30 \), the confidence interval for the difference in proportions \( p_1 - p_2 \) is:
+
+\[
+\hat{p}_1 - \hat{p}_2 \pm z_{\frac{\alpha}{2}} \sqrt{\frac{\hat{p}_1 (1 - \hat{p}_1)}{n_1} + \frac{\hat{p}_2 (1 - \hat{p}_2)}{n_2}}
+\]
+
+where:
+- \( \hat{p}_1 \) is the sample proportion from the first sample,
+- \( \hat{p}_2 \) is the sample proportion from the second sample.
+
+```{r}
+# Sample data from the NZBIRDS dataset
+extinct_sample_size <- 38
+extinct_flightless <- 21
+
+non_extinct_sample_size <- 78
+non_extinct_flightless <- 7
+
+# Proportions of flightless birds in each group
+p_hat_extinct <- extinct_flightless / extinct_sample_size
+p_hat_non_extinct <- non_extinct_flightless / non_extinct_sample_size
+
+# Difference in proportions
+prop_diff <- p_hat_extinct - p_hat_non_extinct
+
+# Standard error for the difference in proportions
+se_diff <- sqrt((p_hat_extinct * (1 - p_hat_extinct) / extinct_sample_size) +
+                (p_hat_non_extinct * (1 - p_hat_non_extinct) / non_extinct_sample_size))
+
+# Z-score for 95% confidence level
+z_score <- qnorm(0.975)
+
+# 95% confidence interval for the difference in proportions
+ci_lower <- prop_diff - z_score * se_diff
+ci_upper <- prop_diff + z_score * se_diff
+
+# Displaying the result
+cat("The 95% confidence interval for the difference in proportions is:",
+    round(ci_lower, 4), "to", round(ci_upper, 4), "\n")
+```
+
+# Task 6
+
+
+The confidence interval for the ratio of two population variances, assuming two independent samples from normal populations, is given by:
+
+\[
+\frac{s_1^2}{s_2^2} \cdot \frac{1}{F_{\frac{\alpha}{2}, \, \nu_1, \, \nu_2}} < \frac{\sigma_1^2}{\sigma_2^2} < \frac{s_1^2}{s_2^2} \cdot F_{\frac{\alpha}{2}, \, \nu_1, \, \nu_2}
+\]
+
+where:
+- \( s_1^2 \) and \( s_2^2 \) are the sample variances,
+- \( F_{\frac{\alpha}{2}, \, \nu_1, \, \nu_2} \) is the critical value from the F-distribution with degrees of freedom \( \nu_1 = n_1 - 1 \) and \( \nu_2 = n_2 - 1 \),
+- \( \alpha \) is the significance level, and \( 1 - \alpha \) is the confidence level.
+
+
+For the calculated confidence interval, interpret the results:
+
+95% confident that the true ratio of variances between the two populations lies within the calculated interval
+
+```{r}
+# Simulated data
+set.seed(35)
+sam1 <- rnorm(25, mean = -10, sd = 5)
+
+set.seed(45)
+sam2 <- rnorm(34, mean = 40, sd = 8)
+
+# 95% Confidence Interval for the ratio of variances
+var_test_95 <- var.test(sam1, sam2, conf.level = 0.95)
+ci_95 <- var_test_95$conf.int
+
+cat("The 95% confidence interval for the ratio of variances (σ1^2 / σ2^2) is:",
+    round(ci_95[1], 4), "to", round(ci_95[2], 4), "\n")
+
+# Additional confidence intervals at different confidence levels
+ci_80 <- var.test(sam1, sam2, conf.level = 0.80)$conf.int
+ci_70 <- var.test(sam1, sam2, conf.level = 0.70)$conf.int
+ci_60 <- var.test(sam1, sam2, conf.level = 0.60)$conf.int
+ci_50 <- var.test(sam1, sam2, conf.level = 0.50)$conf.int
+
+# Displaying Results
+cat("80% CI for the ratio of variances (σ1^2 / σ2^2):", round(ci_80[1], 4), "to", round(ci_80[2], 4), "\n")
+cat("70% CI for the ratio of variances (σ1^2 / σ2^2):", round(ci_70[1], 4), "to", round(ci_70[2], 4), "\n")
+cat("60% CI for the ratio of variances (σ1^2 / σ2^2):", round(ci_60[1], 4), "to", round(ci_60[2], 4), "\n")
+cat("50% CI for the ratio of variances (σ1^2 / σ2^2):", round(ci_50[1], 4), "to", round(ci_50[2], 4), "\n")
+
+# Observing the effect of confidence level on interval width
+cat("As the confidence level decreases, the width of the confidence interval for the ratio of variances also decreases.\n")
+```
+
+
+# Task 7
+```{r}
+# Set the seed and generate a sample
+set.seed(23)
+x <- rnorm(30, mean = 10, sd = 12)
+
+# Call the myci function from your package
+FALL224753butl0072::myci(x)
+```

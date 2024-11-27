@@ -1,0 +1,167 @@
+/* Set a background image with a semi-transparent white overlay */
+body {
+    background-image: url('lvlv.jpg'); /* Background image as requested */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    color: #b08; /* Dark emerald green text */
+    font-family: 'Fenice', sans-serif;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+/* Semi-transparent white overlay for readability */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(220, 233, 230, 0.90); /* White overlay for readability */
+    z-index: -1;
+}
+
+
+/* Header with black and light scarlet gradient */
+header {
+    background: linear-gradient(to right, #b08, #b08); /* Black to light scarlet */
+    color: #ffffff;
+    padding: 20px;
+    text-align: center;
+    font-size: 2em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 4px solid #b08;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient headers for sections */
+h1, h2, h3 {
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #b08; /* Light scarlet */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    font-size: 2em;
+    background: linear-gradient(to right, #b08, #b08); /* Light scarlet to black gradient */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+h2 {
+    font-size: 1.5em;
+    color: #b08; /* Light scarlet */
+}
+
+h3 {
+    font-size: 1.2em;
+    color: #b08; /* Tan-gold */
+}
+
+/* Links with dark tan */
+a {
+    color: #b08; /* Tan-gold */
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+a:hover {
+    color: #b08; /* Light scarlet on hover */
+}
+
+/* Custom button style */
+button {
+    background-color: #b08; /* Light scarlet */
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+button:hover {
+    background-color: #b08; /* Tan-gold */
+}
+
+/* Primary text blocks */
+p {
+    font-size: 1em;
+    line-height: 1.6;
+    margin: 10px 0;
+    color: #b08 /* Light scarlet */
+}
+
+/* Custom styling for lists */
+ul, ol {
+    margin-left: 20px;
+    padding-left: 0;
+    color: #b08;
+}
+
+li {
+    margin-bottom: 5px;
+    color: #b08; /* Tan-gold */
+}
+
+/* Table styling with subtle background */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background-color: rgba(17, 17, 17, 0.9); /* Dark background */
+}
+
+th, td {
+    border: 2px solid #b08;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #111111; /* Dark background */
+    color: #b08;
+    font-weight: bold;
+}
+
+td {
+    color: #ff5a5f; /* Tan-gold */
+}
+
+/* Footer style */
+footer {
+    background-color: #000000; /* Black */
+    color: #b08;
+    text-align: center;
+    padding: 15px;
+    font-size: 0.9em;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+/* Highlighted text */
+.highlight {
+    background-color: #b08; /* Light scarlet */
+    color: #111111;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* Image styling with light scarlet border */
+img {
+    border: 5px solid #b08; /* Light scarlet border */
+    border-radius: 10px;
+    margin: 10px 0;
+}

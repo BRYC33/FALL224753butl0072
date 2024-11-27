@@ -1,0 +1,230 @@
+---
+title: "Lab8"
+author: "Bryce Butler"
+date: "2024-10-18"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: spacelab
+    highlight: pygments
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1 
+```{r}
+getwd()
+```
+
+# Task 2
+```{r}
+# Create a sample of size n=10 from a uniform distribution that has lower limit 0 and upper limit 5
+set.seed(123)  # Set seed for reproducibility
+n <- 10
+sample_data <- runif(n, min = 0, max = 5)  # Generate the sample
+
+# Record the results
+sample_data
+
+# Calculate the population mean (μ) and variance (σ^2) for the uniform distribution
+a <- 0
+b <- 5
+population_mean <- (a + b) / 2
+population_variance <- (b - a)^2 / 12
+
+# Print population parameters
+population_mean  # Should be 2.5
+population_variance  # Should be 2.083333
+
+# Use the sample to calculate the sample mean (x̄) and sample variance (s²)
+sample_mean <- mean(sample_data)
+sample_variance <- var(sample_data)
+
+# Print sample statistics
+sample_mean
+sample_variance
+
+
+# Mean and Variance of the sum (T)
+# The sum is the sum of all n values in the sample.
+sum_mean <- n * population_mean
+sum_variance <- n * population_variance
+
+# Mean and Variance of the mean (Ȳ)
+# The mean is just the average of the sum, and its variance is adjusted by n.
+mean_mean <- population_mean
+mean_variance <- population_variance / n
+
+# Print results for the sum and the mean
+sum_mean  # Expected value of the sum
+sum_variance  # Variance of the sum
+mean_mean  # Expected value of the mean
+mean_variance  # Variance of the mean
+
+```
+
+Compare to population parameters
+ The mean and variance should be close to the population mean and variance
+ Differences are due to the randomness of the sample.
+
+# Task 3
+```{r}
+mycltu <- function(n, iter, a = 0, b = 10) {
+  # Generate random samples from a uniform distribution
+  y <- runif(n * iter, a, b)
+  
+  # Reshape the data into a matrix (n rows, iter columns)
+  data <- matrix(y, nrow = n, ncol = iter, byrow = TRUE)
+  
+  # Apply the mean function to each column (2 indicates columns)
+  w <- apply(data, 2, mean)
+  
+  # Create the histogram of the sample means
+  param <- hist(w, plot = FALSE)  # Generate histogram without plotting
+  ymax <- 1.1 * max(param$density)  # Calculate ymax for density plot scaling
+  
+  # Plot the histogram with density
+  hist(w, freq = FALSE, ylim = c(0, ymax), main = paste("Histogram of Sample Mean\nSample Size = ", n),
+       xlab = "Sample Mean")
+  
+  # Add a density curve based on the sample data
+  lines(density(w), col = "Blue", lwd = 3)
+  
+  # Add the theoretical normal curve (Central Limit Theorem)
+  curve(dnorm(x, mean = (a + b) / 2, sd = (b - a) / sqrt(12 * n)), 
+        add = TRUE, col = "Red", lty = 2, lwd = 3)
+  
+  # Add the uniform distribution density for comparison
+  curve(dunif(x, a, b), add = TRUE, lwd = 4)
+}
+
+# Record the plots for different values of n
+par(mfrow = c(3, 2))  # Set up a 3x2 plotting layout
+
+# Generate plots for different sample sizes
+mycltu(n = 1, iter = 10000, a = 0, b = 10)
+mycltu(n = 2, iter = 10000, a = 0, b = 10)
+mycltu(n = 3, iter = 10000, a = 0, b = 10)
+mycltu(n = 5, iter = 10000, a = 0, b = 10)
+mycltu(n = 10, iter = 10000, a = 0, b = 10)
+mycltu(n = 30, iter = 10000, a = 0, b = 10)
+
+```
+ Explanation of apply function with 2:
+ The 2 in apply(data, 2, mean) tells R to apply the function 'mean' to each column (dimension 2) of the matrix 'data'.
+ This results in a vector where each element is the mean of a column (i.e., a sample of size n).
+
+Explanation of terms in w when n=20, iter=100000:
+ When mycltu(n = 20, iter = 100000) is called, w contains 100,000 values, each representing the mean of 20 values (i.e., each column of the matrix).
+
+ Explanation of sd in the theoretical normal curve:
+ The standard deviation used in the theoretical normal curve is derived from the variance of the uniform distribution, divided by sqrt(n).
+ Variance of a uniform distribution is (b - a)^2 / 12.
+ Therefore, the standard deviation for the mean is (b - a) / sqrt(12 * n).
+
+
+# Task 4
+```{r}
+mycltb <- function(n, iter, p = 0.5, ...) {
+  # Generate random samples from a binomial distribution
+  y <- rbinom(n * iter, size = n, prob = p)
+  
+  # Reshape the data into a matrix (n rows, iter columns)
+  data <- matrix(y, nrow = n, ncol = iter, byrow = TRUE)
+  
+  # Apply the mean function to each column (2 indicates columns)
+  w <- apply(data, 2, mean)
+  
+  # Create the histogram of the sample means
+  param <- hist(w, plot = FALSE)
+  ymax <- 1.1 * max(param$density)  # Calculate ymax for density plot scaling
+  
+  # Plot the histogram with density
+  hist(w, freq = FALSE, ylim = c(0, ymax), main = paste("Histogram of Sample Mean\nSample Size = ", n),
+       xlab = "Sample Mean", ...)
+  
+  # Add the theoretical normal curve (Central Limit Theorem)
+  curve(dnorm(x, mean = n * p, sd = sqrt(p * (1 - p))), add = TRUE, col = "Red", lty = 2, lwd = 3)
+}
+
+# Record the plots for different values of n and p = 0.3
+par(mfrow = c(2, 2))  # Set up a 2x2 plotting layout
+
+mycltb(n = 4, iter = 10000, p = 0.3)
+mycltb(n = 5, iter = 10000, p = 0.3)
+mycltb(n = 10, iter = 10000, p = 0.3)
+mycltb(n = 20, iter = 10000, p = 0.3)
+
+# Record the plots for p = 0.7
+par(mfrow = c(2, 2))  # Reset the layout for more plots
+
+mycltb(n = 4, iter = 10000, p = 0.7)
+mycltb(n = 5, iter = 10000, p = 0.7)
+mycltb(n = 10, iter = 10000, p = 0.7)
+mycltb(n = 20, iter = 10000, p = 0.7)
+
+# Record the plots for p = 0.5
+par(mfrow = c(2, 2))  # Reset the layout again
+
+mycltb(n = 4, iter = 10000, p = 0.5)
+mycltb(n = 5, iter = 10000, p = 0.5)
+mycltb(n = 10, iter = 10000, p = 0.5)
+mycltb(n = 20, iter = 10000, p = 0.5)
+```
+As n increases, the mean distribution becomes more symmetric and aligning more to a normal distribution. This happens regardless of the value of p. This aligns with the Central Limit Theorem, stating that the distribution of the sample means will approach more normal distribution as the sample size grows. This happens even when the underlying population distribution is binomial. 
+
+
+# Task 5
+```{r}
+mycltp <- function(n, iter, lambda = 4, ...) {
+  # Generate random samples from a Poisson distribution
+  y <- rpois(n * iter, lambda = lambda)
+  
+  # Reshape the data into a matrix (n rows, iter columns)
+  data <- matrix(y, nrow = n, ncol = iter, byrow = TRUE)
+  
+  # Apply the mean function to each column (2 indicates columns)
+  w <- apply(data, 2, mean)
+  
+  # Create the histogram of the sample means
+  param <- hist(w, plot = FALSE)
+  ymax <- 1.1 * max(param$density)  # Calculate ymax for density plot scaling
+  
+  # Plot the histogram with density
+  hist(w, freq = FALSE, ylim = c(0, ymax), col = rainbow(length(param$mids)),
+       main = paste("Histogram of Sample Mean\nSample Size = ", n, " Iter = ", iter, " Lambda = ", lambda),
+       xlab = "Sample Mean", ...)
+  
+  # Add the theoretical normal curve (Central Limit Theorem)
+  curve(dnorm(x, mean = lambda, sd = sqrt(lambda / n)), add = TRUE, col = "Red", lty = 2, lwd = 3)
+}
+
+# Record the plots for different values of n and lambda = 4
+par(mfrow = c(3, 2))  # Set up a 3x2 plotting layout
+
+mycltp(n = 2, iter = 10000, lambda = 4)
+mycltp(n = 3, iter = 10000, lambda = 4)
+mycltp(n = 5, iter = 10000, lambda = 4)
+mycltp(n = 10, iter = 10000, lambda = 4)
+mycltp(n = 20, iter = 10000, lambda = 4)
+
+# Do the same for lambda = 10
+par(mfrow = c(3, 2))  # Reset the layout for more plots
+
+mycltp(n = 2, iter = 10000, lambda = 10)
+mycltp(n = 3, iter = 10000, lambda = 10)
+mycltp(n = 5, iter = 10000, lambda = 10)
+mycltp(n = 10, iter = 10000, lambda = 10)
+mycltp(n = 20, iter = 10000, lambda = 10)
+```
+
+
+# Task 6
+
+```{r}
+
+FALL224753butl0072::mycltp(n = 10, iter = 10000, lambda = 4)
+```

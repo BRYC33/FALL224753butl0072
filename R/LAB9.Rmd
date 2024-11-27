@@ -1,0 +1,202 @@
+---
+title: "LAB9"
+author: "Bryce Butler"
+date: "2024-10-29"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: spacelab
+    highlight: pygments
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(FALL224753butl0072)
+load("~/Downloads/PROJECTS/FALL224753butl0072/data/spruce.df.rda")
+```
+
+# Task 1 
+```{r}
+getwd()
+```
+
+# Task 2 
+
+WHY SHOULD EACH DATUM IN X BE SELECTED WITH EQUAL OPPORTUNITY? 
+
+It is necessary to ensure that each data point has an equal chance of being selected for each bootstrap sample
+```{r}
+# Sampling test
+set.seed(35)
+sam <- round(rnorm(20, mean=10, sd=4), 2)
+
+# With replacement
+for (i in 1:5) {
+  print(unique(sample(sam, 20, replace=TRUE)))
+}
+
+# Without replacement
+for (i in 1:5) {
+  print(unique(sample(sam, 20, replace=FALSE)))
+}
+
+# Attempting to sample more than available elements without replacement
+sample(sam, 21, replace=TRUE)  
+```
+An error is thrown when replace is set to FALSE because it is attempting to sample more than is available without replacement. 
+
+
+# Task 3
+
+In each of the above cases how close is the point estimate to the population value?
+
+The point estimate is very close to the population value. 
+
+```{r}
+# Define the `myboot2` function
+myboot2 <- function(iter=10000, x, fun="mean", alpha=0.05, cx=1.5, ...) {  
+  n <- length(x)
+  y <- sample(x, n * iter, replace=TRUE)
+  rs.mat <- matrix(y, nr=n, nc=iter, byrow=TRUE)
+  xstat <- apply(rs.mat, 2, fun)
+  ci <- quantile(xstat, c(alpha/2, 1-alpha/2))
+  
+  para <- hist(xstat, freq=FALSE, las=1,
+               main=paste("Histogram of Bootstrap Sample Statistics", "\n",
+                          "alpha=", alpha, " iter=", iter, sep=""), 
+               ...)
+  mat <- matrix(x, nr=length(x), nc=1, byrow=TRUE)
+  pte <- apply(mat, 2, fun)
+  
+  abline(v=pte, lwd=3, col="Black")
+  segments(ci[1], 0, ci[2], 0, lwd=4)
+  text(ci[1], 0, paste("(", round(ci[1], 2), sep=""), col="Red", cex=cx)
+  text(ci[2], 0, paste(round(ci[2], 2), ")", sep=""), col="Red", cex=cx)
+  text(pte, max(para$density) / 2, round(pte, 2), cex=cx)
+  
+  invisible(list(ci=ci, fun=fun, x=x))
+}
+
+# Set seeds and generate samples for mean estimation
+set.seed(39); sam1 <- rnorm(25, mean=25, sd=10)
+set.seed(30); sam2 <- rchisq(20, df=3)
+set.seed(40); sam3 <- rgamma(30, shape=2, scale=3)
+set.seed(10); sam4 <- rbeta(20, shape1=3, shape2=4)
+
+# 95% CI for the mean
+myboot2(iter=10000, x=sam1, fun="mean", alpha=0.05)
+myboot2(iter=10000, x=sam2, fun="mean", alpha=0.05)
+myboot2(iter=10000, x=sam3, fun="mean", alpha=0.05)
+myboot2(iter=10000, x=sam4, fun="mean", alpha=0.05)
+
+# 80% CI for the variance
+myboot2(iter=10000, x=sam1, fun="var", alpha=0.20)
+myboot2(iter=10000, x=sam2, fun="var", alpha=0.20)
+myboot2(iter=10000, x=sam3, fun="var", alpha=0.20)
+myboot2(iter=10000, x=sam4, fun="var", alpha=0.20)
+```
+
+# Task 4 
+```{r}
+# Update `myboot2` to return `xstat`
+myboot2 <- function(iter=10000, x, fun="mean", alpha=0.05, cx=1.5, ...) {  
+  n <- length(x)
+  y <- sample(x, n * iter, replace=TRUE)
+  rs.mat <- matrix(y, nr=n, nc=iter, byrow=TRUE)
+  xstat <- apply(rs.mat, 2, fun)
+  ci <- quantile(xstat, c(alpha/2, 1-alpha/2))
+  
+  para <- hist(xstat, freq=FALSE, las=1,
+               main=paste("Histogram of Bootstrap Sample Statistics", "\n", 
+                          "alpha=", alpha, " iter=", iter, sep=""), 
+               ...)
+  mat <- matrix(x, nr=length(x), nc=1, byrow=TRUE)
+  pte <- apply(mat, 2, fun)
+  
+  abline(v=pte, lwd=3, col="Black")
+  segments(ci[1], 0, ci[2], 0, lwd=4)
+  text(ci[1], 0, paste("(", round(ci[1], 2), sep=""), col="Red", cex=cx)
+  text(ci[2], 0, paste(round(ci[2], 2), ")", sep=""), col="Red", cex=cx)
+  text(pte, max(para$density) / 2, round(pte, 2), cex=cx)
+  
+  invisible(list(ci=ci, fun=fun, x=x, xstat=xstat))
+}
+
+# Calculate median for the provided sample and plot xstat
+sam <- c(1,1,1,2,2,2,2,3,3,3,4,4)
+result <- myboot2(x=sam, fun="median")
+barplot(result$xstat, main="Bootstrap Sample Statistics for Median")
+result$ci
+```
+
+Boostrap Estimate for the mean (L, U): 1.5, 3.0
+
+
+# Task 5
+```{r}
+mean_median_ratio <- function(sam, alpha=0.05) {
+  myboot2(x=sam, fun=function(x) mean(x)/median(x), alpha=alpha)
+}
+
+# Samples
+set.seed(39); sam1 <- rnorm(25, mean=25, sd=10)
+set.seed(30); sam2 <- rchisq(20, df=3)
+set.seed(40); sam3 <- rgamma(30, shape=2, scale=3)
+set.seed(10); sam4 <- rbeta(20, shape1=3, shape2=4)
+
+# 95% and 70% Intervals
+mean_median_ratio(sam1, alpha=0.05)
+mean_median_ratio(sam2, alpha=0.05)
+mean_median_ratio(sam3, alpha=0.05)
+mean_median_ratio(sam4, alpha=0.05)
+
+mean_median_ratio(sam1, alpha=0.30)
+mean_median_ratio(sam2, alpha=0.30)
+mean_median_ratio(sam3, alpha=0.30)
+mean_median_ratio(sam4, alpha=0.30)
+```
+
+# Task 6
+```{r}
+# Additional distributions
+set.seed(50); sam5 <- rexp(20, rate=1)
+set.seed(51); sam6 <- rgeom(20, prob=0.5)
+set.seed(52); sam7 <- rlogis(20, location=0, scale=1)
+set.seed(53); sam8 <- rweibull(20, shape=2, scale=1)
+
+# 80% CI for mean and variance
+myboot2(x=sam5, fun="mean", alpha=0.20)
+myboot2(x=sam5, fun="var", alpha=0.20)
+myboot2(x=sam6, fun="mean", alpha=0.20)
+myboot2(x=sam6, fun="var", alpha=0.20)
+myboot2(x=sam7, fun="mean", alpha=0.20)
+myboot2(x=sam7, fun="var", alpha=0.20)
+myboot2(x=sam8, fun="mean", alpha=0.20)
+myboot2(x=sam8, fun="var", alpha=0.20)
+```
+
+# Task 7
+```{r}
+set.seed(68)
+sam <- rnorm(20, mean=10, sd=4)
+
+# Theoretical 95% CI
+theoretical_ci <- c(mean(sam) - qnorm(0.975) * sd(sam) / sqrt(length(sam)), 
+                    mean(sam) + qnorm(0.975) * sd(sam) / sqrt(length(sam)))
+theoretical_ci
+
+# Bootstrap 95% CI
+myboot2(x=sam, fun="mean", alpha=0.05)
+```
+
+How do they compare? 
+
+They are very close. They both contain the mean in the interval, but the bootstrap could be considered a tad bit more accurate. The bootsrap is more effective since it does not assume normally and has more flexibility. 
+
+
+# Task 8
+```{r}
+obj <- FALL224753butl0072::myboot2(x =spruce.df$pH)
+print(obj)
+```

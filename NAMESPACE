@@ -1,0 +1,12 @@
+exportPattern("^[[:alpha:]]+")
+ importFrom("stats", "rbinom")
+ importFrom("graphics", "curve", "polygon")
+    importFrom("stats", "dnorm", "pnorm")
+importFrom("stats", "pbinom", "qbinom", "qnorm")
+importFrom("graphics", "abline")
+
+ importFrom("grDevices", "rainbow")
+    importFrom("graphics", "hist")
+    importFrom("stats", "rpois")
+importFrom("graphics", "segments", "text")
+    importFrom("stats", "quantile")

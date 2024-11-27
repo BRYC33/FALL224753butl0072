@@ -1,0 +1,610 @@
+---
+title: "Lab12"
+author: "Bryce Butler"
+date: "2024-11-15"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    css: "custom.css"
+  
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(FALL224753butl0072)
+```
+
+# Task 1 
+```{r}
+getwd()
+```
+
+# Task 2 
+
+
+## Hypothesis Testing
+
+We want to test various null hypotheses \( H_0: \mu = \mu_0 \) for a sample \( x_1 \). Assume we know neither the population mean nor the population variance.
+
+## Calculating \( t_{\text{calc}} \)
+
+The test statistic \( t_{\text{calc}} \) is given by:
+
+\[
+t_{\text{calc}} = \frac{\bar{x} - \mu_0}{\frac{s}{\sqrt{n}}}
+\]
+
+where:
+- \( \bar{x} \) is the sample mean
+- \( \mu_0 \) is the hypothesized population mean
+- \( s \) is the sample standard deviation
+- \( n \) is the sample size
+
+## P-Value Calculation
+
+The p-value is calculated as:
+
+\[
+P(\text{T} \geq |t_{\text{calc}}|) = P(T \geq t_{\text{calc}}) + P(T \leq -t_{\text{calc}})
+\]
+
+where \( T \) follows a \( t \)-distribution with \( n - 1 \) degrees of freedom.
+
+## Rejection Region
+
+The rejection region for a two-tailed test at significance level \( \alpha = 0.05 \) is:
+
+\[
+t_{\alpha/2} \text{ and } -t_{\alpha/2}
+\]
+
+where \( t_{\alpha/2} \) is the critical value for a two-tailed test.
+
+## Bootstrap P-Values
+
+Using bootstrapping, we estimate the p-value for each hypothesis by resampling the data:
+
+\[
+\text{p-value} = \frac{\text{number of resampled test statistics more extreme than } t_{\text{calc}}}{\text{total resamples}}
+\]
+
+This gives a non-parametric way to evaluate the null hypothesis.
+
+
+```{r}
+# Set seed and generate sample data
+set.seed(55)
+x1 <- rnorm(30, mean = 25, sd = 5)
+boxplot(x1, main = "Sample x1")
+
+# Perform one-sample t-tests for each null hypothesis
+t_test_results <- list(
+  t_test_22 = t.test(x1, mu = 22),
+  t_test_23 = t.test(x1, mu = 23),
+  t_test_24 = t.test(x1, mu = 24),
+  t_test_25 = t.test(x1, mu = 25),
+  t_test_26 = t.test(x1, mu = 26)
+)
+
+# Calculate tcalc for H0: mu = 24
+tcalc <- (mean(x1) - 24) / (sd(x1) / sqrt(length(x1)))
+tcalc
+
+# Function to display P-value areas
+mypvalue <- function(t0, xmax = 4, n = 20, alpha = 0.05) {
+  va <- round(pt(-t0, df = n - 1), 4)
+  pv <- 2 * va
+  
+  # Plot the t distribution
+  curve(dt(x, df = n - 1), xlim = c(-xmax, xmax), ylab = "T Density", xlab = expression(t),
+        main = substitute(paste("P-value=", pv, " alpha=", alpha)))
+  
+  # Set up points for the right polygon
+  xcurve <- seq(t0, xmax, length = 1000)
+  ycurve <- dt(xcurve, df = n - 1)
+  
+  # Set up points for the left polygon
+  xlcurve <- seq(-t0, -xmax, length = 1000)
+  ylcurve <- dt(xcurve, df = n - 1)
+  
+  # Shade in polygons
+  polygon(c(t0, xcurve, xmax), c(0, ycurve, 0), col = "green")
+  polygon(c(-t0, xlcurve, -xmax), c(0, ylcurve, 0), col = "green")
+  
+  # Plot the critical values
+  q <- qt(1 - alpha / 2, n - 1)
+  abline(v = c(q, -q), lwd = 2)
+  axis(3, c(q, -q), c(expression(abs(t[alpha/2])), expression(-abs(t[alpha/2]))))
+  
+  # Add text annotations
+  text(0.5 * (t0 + xmax), max(ycurve), substitute(paste(area, "=", va)))
+  text(-0.5 * (t0 + xmax), max(ycurve), expression(area))
+  
+  return(list(q = q, pvalue = pv))
+}
+
+# Use mypvalue function to create the p-value plot
+mypvalue(tcalc, xmax = 4, n = length(x1), alpha = 0.05)
+
+# Determine rejection region for two-tailed test with alpha = 0.05
+alpha <- 0.05
+df <- length(x1) - 1
+t_critical <- qt(1 - alpha / 2, df)
+rejection_region <- c(-t_critical, t_critical)
+rejection_region
+
+# Bootstrap function to calculate p-value
+bootpval <- function(x, conf.level = 0.95, iter = 3000, mu0 = 0, test = "two") {
+  n <- length(x)
+  y <- x - mean(x) + mu0
+  rs.mat <- xrs.mat <- c()
+  
+  for (i in 1:iter) {
+    rs.mat <- cbind(rs.mat, sample(y, n, replace = TRUE))
+    xrs.mat <- cbind(xrs.mat, sample(x, n, replace = TRUE))
+  }
+  
+  tstat <- function(z) sqrt(n) * (mean(z) - mu0) / sd(z)
+  tcalc <- tstat(x)
+  ytstat <- apply(rs.mat, 2, tstat)
+  
+  pvalue <- if (test == "two") {
+    length(ytstat[ytstat > abs(tcalc) | ytstat < -abs(tcalc)]) / iter
+  } else if (test == "upper") {
+    length(ytstat[ytstat > tcalc]) / iter
+  } else {
+    length(ytstat[ytstat < tcalc]) / iter
+  }
+  
+  return(list(pvalue = pvalue, tcalc = tcalc, n = n, test = test))
+}
+
+# Bootstrap p-values for each hypothesis
+boot_results <- list(
+  boot_22 = bootpval(x = x1, mu0 = 22, test = "two"),
+  boot_23 = bootpval(x = x1, mu0 = 23, test = "two"),
+  boot_24 = bootpval(x = x1, mu0 = 24, test = "two"),
+  boot_25 = bootpval(x = x1, mu0 = 25, test = "two"),
+  boot_26 = bootpval(x = x1, mu0 = 26, test = "two")
+)
+
+# Display results
+list(
+  t_test_results = t_test_results,
+  tcalc = tcalc,
+  rejection_region = rejection_region,
+  boot_results = boot_results
+)
+```
+
+
+# Task 3 
+
+
+## Equality of Variance Test
+
+To test if the variances of two samples \( x \) and \( y \) are equal, we perform an equality of variance test:
+
+\[
+H_0: \sigma_x^2 = \sigma_y^2
+\]
+\[
+H_1: \sigma_x^2 \neq \sigma_y^2
+\]
+
+
+
+## Two-Sample t-Test
+
+We perform two-sample t-tests to test for differences in means under two null hypotheses.
+
+### Hypotheses for \( \mu_x - \mu_y = 0 \)
+\[
+H_0: \mu_x - \mu_y = 0
+\]
+\[
+H_1: \mu_x - \mu_y \neq 0
+\]
+
+### Hypotheses for \( \mu_x - \mu_y = 2 \)
+\[
+H_0: \mu_x - \mu_y = 2
+\]
+\[
+H_1: \mu_x - \mu_y \neq 2
+\]
+
+The test statistic for the two-sample t-test, assuming unequal variances, is given by:
+
+\[
+t = \frac{(\bar{x} - \bar{y}) - \Delta_0}{\sqrt{\frac{s_x^2}{n_x} + \frac{s_y^2}{n_y}}}
+\]
+
+where:
+- \( \bar{x} \) and \( \bar{y} \) are the sample means,
+- \( s_x^2 \) and \( s_y^2 \) are the sample variances,
+- \( n_x \) and \( n_y \) are the sample sizes,
+- \( \Delta_0 \) is the hypothesized difference in means (0 or 2 in this case).
+
+If the p-value from the t-test is less than the significance level, we reject the null hypothesis.
+
+
+```{r}
+# Define x and y as per the task instructions
+set.seed(30)
+x <- rnorm(15, mean = 10, sd = 7)
+set.seed(40)
+y <- rnorm(20, mean = 12, sd = 4)
+
+# Perform an equality of variance test
+var_test_result <- var.test(x, y)
+var_test_result
+
+# Based on the result of the var.test, decide whether to set var.equal = TRUE or FALSE in t.test
+# If p-value < 0.05, variances are unequal; otherwise, they are assumed equal.
+var_equal <- var_test_result$p.value > 0.05
+
+# Perform two-sample t-tests for different null hypotheses
+# H0: mu_x - mu_y = 0
+t_test_0 <- t.test(x, y, mu = 0, var.equal = var_equal)
+
+# H0: mu_x - mu_y = 2
+t_test_2 <- t.test(x, y, mu = 2, var.equal = var_equal)
+
+# Display results
+list(
+  var_test_result = var_test_result,
+  t_test_0 = t_test_0,
+  t_test_2 = t_test_2
+)
+```
+
+
+# Task 4
+
+## Equality of Variance Test
+
+To test if the variances of two samples \( x \) and \( y \) are equal, we perform an equality of variance test:
+
+\[
+H_0: \sigma_x^2 = \sigma_y^2
+\]
+\[
+H_1: \sigma_x^2 \neq \sigma_y^2
+\]
+
+If the p-value from the test is less than the significance level (usually 0.05), we conclude that the variances are significantly different.
+
+## Two-Sample t-Test
+
+We perform two-sample t-tests to test for differences in means under two null hypotheses.
+
+### Hypotheses for \( \mu_x - \mu_y = 0 \)
+\[
+H_0: \mu_x - \mu_y = 0
+\]
+\[
+H_1: \mu_x - \mu_y \neq 0
+\]
+
+### Hypotheses for \( \mu_x - \mu_y = 2 \)
+\[
+H_0: \mu_x - \mu_y = 2
+\]
+\[
+H_1: \mu_x - \mu_y \neq 2
+\]
+
+The test statistic for the two-sample t-test, assuming equal variances, is given by:
+
+\[
+t = \frac{(\bar{x} - \bar{y}) - \Delta_0}{\sqrt{s_p^2 \left( \frac{1}{n_x} + \frac{1}{n_y} \right)}}
+\]
+
+where:
+- \( \bar{x} \) and \( \bar{y} \) are the sample means,
+- \( s_p^2 \) is the pooled variance,
+- \( n_x \) and \( n_y \) are the sample sizes,
+- \( \Delta_0 \) is the hypothesized difference in means (0 or 2 in this case).
+
+The pooled variance \( s_p^2 \) is calculated as:
+
+\[
+s_p^2 = \frac{(n_x - 1)s_x^2 + (n_y - 1)s_y^2}{n_x + n_y - 2}
+\]
+
+where \( s_x^2 \) and \( s_y^2 \) are the sample variances of \( x \) and \( y \), respectively.
+
+If variances are not equal, we use the Welch’s t-test formula:
+
+\[
+t = \frac{(\bar{x} - \bar{y}) - \Delta_0}{\sqrt{\frac{s_x^2}{n_x} + \frac{s_y^2}{n_y}}}
+\]
+
+If the p-value from the t-test is less than the significance level, we reject the null hypothesis.
+
+
+```{r}
+# Define x and y as per the task instructions
+set.seed(30)
+x <- rnorm(15, mean = 10, sd = 4)
+set.seed(40)
+y <- rnorm(20, mean = 12, sd = 4)
+
+# Perform an equality of variance test
+var_test_result <- var.test(x, y)
+var_test_result
+
+# Determine whether to set var.equal = TRUE or FALSE based on the variance test
+# If p-value < 0.05, variances are unequal; otherwise, they are assumed equal.
+var_equal <- var_test_result$p.value > 0.05
+
+# Perform two-sample t-tests for different null hypotheses
+# H0: mu_x - mu_y = 0
+t_test_0 <- t.test(x, y, mu = 0, var.equal = var_equal)
+
+# H0: mu_x - mu_y = 2
+t_test_2 <- t.test(x, y, mu = 2, var.equal = var_equal)
+
+# Display results
+list(
+  var_test_result = var_test_result,
+  var_equal_assumption = var_equal,
+  t_test_0 = t_test_0,
+  t_test_2 = t_test_2
+)
+```
+# Boots2Pval function 
+```{r}
+# Define the revised boot2pval function
+boot2pval <- function(x1, x2, conf.level = 0.95, iter = 3000, mudiff = 0, test = "two") {
+  n1 <- length(x1)
+  n2 <- length(x2)
+  combined_mean <- mean(c(x1, x2))
+  
+  # Center the data around the combined mean to create y1 and y2 for bootstrapping
+  y1 <- x1 - mean(x1) + combined_mean
+  y2 <- x2 - mean(x2) + combined_mean
+
+  # Create matrices for resampled values
+  y1rs.mat <- matrix(NA, nrow = n1, ncol = iter)
+  y2rs.mat <- matrix(NA, nrow = n2, ncol = iter)
+
+  for (i in 1:iter) {
+    y1rs.mat[, i] <- sample(y1, n1, replace = TRUE)
+    y2rs.mat[, i] <- sample(y2, n2, replace = TRUE)
+  }
+
+  # Calculate observed t-statistic
+  tcalc <- (mean(x1) - mean(x2) - mudiff) / sqrt(var(x1) / n1 + var(x2) / n2)
+
+  # Calculate t-statistics for resampled data
+  y1_means <- colMeans(y1rs.mat)
+  y2_means <- colMeans(y2rs.mat)
+  y1_vars <- apply(y1rs.mat, 2, var)
+  y2_vars <- apply(y2rs.mat, 2, var)
+  
+  tstat <- (y1_means - y2_means - mudiff) / sqrt(y1_vars / n1 + y2_vars / n2)
+  
+  # Calculate p-value based on bootstrap results
+  if (test == "two") {
+    pvalue <- mean(abs(tstat) >= abs(tcalc))
+  } else if (test == "upper") {
+    pvalue <- mean(tstat >= tcalc)
+  } else {
+    pvalue <- mean(tstat <= tcalc)
+  }
+
+  # Plot the histogram of bootstrap t-statistics
+  hist(tstat, col = "lightblue", freq = FALSE, main = "Bootstrap Distribution of t-statistics",
+       xlab = expression(T[stat]), las = 1)
+  abline(v = c(-abs(tcalc), abs(tcalc)), col = "red", lwd = 2)
+
+  return(list(pvalue = pvalue, tcalc = tcalc))
+}
+
+```
+
+# Task 5 
+
+## Bootstrap Testing
+
+We use bootstrap testing to assess the difference between two sample means under the null hypothesis that \( \mu_x - \mu_y = \Delta_0 \).
+
+### Hypotheses
+
+For each test, the null and alternative hypotheses are defined as follows:
+
+1. **For \( \Delta_0 = 0 \):**
+   \[
+   H_0: \mu_x - \mu_y = 0
+   \]
+   \[
+   H_1: \mu_x - \mu_y \neq 0
+   \]
+
+2. **For \( \Delta_0 = 2 \):**
+   \[
+   H_0: \mu_x - \mu_y = 2
+   \]
+   \[
+   H_1: \mu_x - \mu_y \neq 2
+   \]
+
+### Bootstrap t-Statistic
+
+The bootstrap t-statistic for the difference in means is calculated as:
+
+\[
+t = \frac{(\bar{x} - \bar{y}) - \Delta_0}{\sqrt{\frac{s_x^2}{n_x} + \frac{s_y^2}{n_y}}}
+\]
+
+where:
+- \( \bar{x} \) and \( \bar{y} \) are the sample means,
+- \( s_x^2 \) and \( s_y^2 \) are the sample variances,
+- \( n_x \) and \( n_y \) are the sample sizes,
+- \( \Delta_0 \) is the hypothesized difference in means.
+
+### Calculating the p-Value
+
+The p-value is calculated as the proportion of bootstrap t-statistics more extreme than the observed \( t_{\text{calc}} \):
+
+\[
+\text{p-value} = \frac{\text{number of } |t_{\text{bootstrap}}| \geq |t_{\text{calc}}|}{\text{total bootstrap samples}}
+\]
+
+
+
+```{r}
+# Define x and y as in Task 3
+set.seed(30)
+x <- rnorm(15, mean = 10, sd = 7)
+set.seed(40)
+y <- rnorm(20, mean = 12, sd = 4)
+
+
+# Perform bootstrap tests for each hypothesis
+# H0: mu_x - mu_y = 0
+boot_test_0 <- boot2pval(x1 = x, x2 = y, mudiff = 0, test = "two")
+
+# H0: mu_x - mu_y = 2
+boot_test_2 <- boot2pval(x1 = x, x2 = y, mudiff = 2, test = "two")
+
+# Display results
+list(
+  boot_test_0 = boot_test_0,
+  boot_test_2 = boot_test_2
+)
+```
+
+# Task 6 
+
+## Bootstrap Testing
+
+We use bootstrap testing to assess the difference between two sample means under the null hypothesis that \( \mu_x - \mu_y = \Delta_0 \).
+
+### Hypotheses
+
+For each test, the null and alternative hypotheses are defined as follows:
+
+1. **For \( \Delta_0 = 0 \):**
+   \[
+   H_0: \mu_x - \mu_y = 0
+   \]
+   \[
+   H_1: \mu_x - \mu_y \neq 0
+   \]
+
+2. **For \( \Delta_0 = 2 \):**
+   \[
+   H_0: \mu_x - \mu_y = 2
+   \]
+   \[
+   H_1: \mu_x - \mu_y \neq 2
+   \]
+
+### Bootstrap t-Statistic
+
+The bootstrap t-statistic for the difference in means is calculated as:
+
+\[
+t = \frac{(\bar{x} - \bar{y}) - \Delta_0}{\sqrt{\frac{s_x^2}{n_x} + \frac{s_y^2}{n_y}}}
+\]
+
+where:
+- \( \bar{x} \) and \( \bar{y} \) are the sample means,
+- \( s_x^2 \) and \( s_y^2 \) are the sample variances,
+- \( n_x \) and \( n_y \) are the sample sizes,
+- \( \Delta_0 \) is the hypothesized difference in means.
+
+### Calculating the p-Value
+
+The p-value is calculated as the proportion of bootstrap t-statistics more extreme than the observed \( t_{\text{calc}} \):
+
+\[
+\text{p-value} = \frac{\text{number of } |t_{\text{bootstrap}}| \geq |t_{\text{calc}}|}{\text{total bootstrap samples}}
+\]
+
+
+```{r}
+# Define x and y as in Task 4
+set.seed(30)
+x <- rnorm(15, mean = 10, sd = 4)
+set.seed(40)
+y <- rnorm(20, mean = 12, sd = 4)
+
+
+# Perform bootstrap tests for each hypothesis
+# H0: mu_x - mu_y = 0
+boot_test_0 <- boot2pval(x1 = x, x2 = y, mudiff = 0, test = "two")
+
+# H0: mu_x - mu_y = 2
+boot_test_2 <- boot2pval(x1 = x, x2 = y, mudiff = 2, test = "two")
+
+# Display results
+list(
+  boot_test_0 = boot_test_0,
+  boot_test_2 = boot_test_2
+)
+```
+
+
+# Task 7
+
+## Explanation of One-Sample t-Test Output
+
+Given a one-sample t-test to test the hypothesis \( H_0: \mu = 23 \) versus \( H_1: \mu \neq 23 \), we obtain the following output:
+
+1. **Test Command**: `t.test(x1, mu = 23)`
+   - This performs a one-sample t-test on sample data `x1` with hypothesized mean \( \mu = 23 \).
+
+2. **Test Type**: "One Sample t-test"
+   - A one-sample t-test compares the mean of a single sample to a specified value.
+
+3. **Test Statistic and p-Value**:
+   - The test statistic \( t \) is calculated as:
+     \[
+     t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}
+     \]
+     where:
+     - \( \bar{x} \) is the sample mean,
+     - \( \mu_0 = 23 \) is the hypothesized mean,
+     - \( s \) is the sample standard deviation,
+     - \( n \) is the sample size.
+   - In this case, we have \( t = 2.3563 \), degrees of freedom \( df = 29 \), and p-value \( = 0.02543 \).
+
+4. **Alternative Hypothesis**:
+   - The alternative hypothesis \( H_1 \) is that the true mean is not equal to 23 (two-tailed test).
+
+5. **Confidence Interval**:
+   - The 95% confidence interval is provided as:
+     \[
+     (23.30198, 27.27320)
+     \]
+   - This means we are 95% confident that the true population mean lies within this interval.
+
+6. **Sample Mean**:
+   - The mean of the sample `x1` is calculated as:
+     \[
+     \text{mean of } x = 25.28759
+     \]
+
+In summary, the test provides evidence that the sample mean differs from the hypothesized mean of 23, as indicated by the p-value and the confidence interval.
+
+
+```{r}
+# Set up the sample data
+set.seed(55)
+x1 <- rnorm(30, mean = 25, sd = 5)
+
+# Perform a one-sample t-test
+t_test_result <- t.test(x1, mu = 23)  # A
+t_test_result
+```
+# Task 8 
+
+```{r}
+FALL224753butl0072::mypvalue(t0 =2, n = 30)
+```

@@ -1,0 +1,1093 @@
+---
+title: "ASS3"
+author: "Bryce Butler"
+date: "2024-11-04"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    css: "custom.css"
+  
+---
+    
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# I Completed 16/16
+
+
+# Get WD
+```{r}
+getwd()
+```
+
+# Problem 1 (5.54)
+
+1. **Probability of Observing an Interarrival Time of at Least 2 Minutes**
+
+   Given that the interarrival time \( X \) follows an exponential distribution with mean \( \beta = 95 \), calculate the probability that the interarrival time is at least 2 minutes (120 seconds):
+
+   \[
+   P(X \geq 120) = e^{-\frac{120}{\beta}}
+   \]
+
+2. **Goodness-of-Fit Test for Exponential Distribution**
+
+   To determine if the data follows an exponential distribution with \( \beta = 95 \), perform a Kolmogorov-Smirnov test using the empirical data.
+
+
+```{r}
+# Load the data
+phishing_data <- read.csv("phishing.csv")
+
+# Part (a): Probability of observing an interarrival time of at least 2 minutes
+beta <- 95  # mean interarrival time
+time_in_seconds <- 2 * 60  # 2 minutes in seconds
+
+# Calculate the probability for an exponential distribution
+prob <- pexp(time_in_seconds, rate = 1 / beta, lower.tail = FALSE)
+cat("The probability of observing an interarrival time of at least 2 minutes:", round(prob, 4), "\n")
+
+# Part (b): Check if the data follows an exponential distribution with beta = 95
+# Load the data and perform a goodness-of-fit test
+interarrival_times <- phishing_data$INTTIME
+
+# Perform Kolmogorov-Smirnov test
+ks_test <- ks.test(interarrival_times, "pexp", rate = 1 / beta)
+print("Kolmogorov-Smirnov test result:")
+print(ks_test)
+
+# Plot the histogram and theoretical exponential density
+hist(interarrival_times, prob = TRUE, main = "Histogram of Interarrival Times",
+     xlab = "Interarrival Time (seconds)", ylab = "Density")
+curve(dexp(x, rate = 1 / beta), col = "blue", lwd = 2, add = TRUE)
+
+```
+
+# Problem 2 (5.56)
+
+1. **Mean and Variance of the Gamma Distribution**
+
+   \[
+   \text{Mean} = \alpha \cdot \beta
+   \]
+   \[
+   \text{Variance} = \alpha \cdot \beta^2
+   \]
+
+2. **Probability of Observing a Flood Level of 0.60 or Higher**
+
+   \[
+   P(X \geq 0.60) = 1 - F(0.60)
+   \]
+
+
+```{r}
+# Parameters for the gamma distribution
+alpha <- 3
+beta <- 0.07
+
+# Part (a): Calculate the mean and variance
+mean_flood <- alpha * beta
+variance_flood <- alpha * beta^2
+
+cat("Mean of the maximum flood level:", mean_flood, "\n")
+cat("Variance of the maximum flood level:", variance_flood, "\n")
+
+# Part (b): Probability of observing a flood level of 0.60 or higher
+flood_level <- 0.60
+probability <- pgamma(flood_level, shape = alpha, scale = beta, lower.tail = FALSE)
+
+cat("Probability of observing a flood level of 0.60 or higher:", round(probability, 4), "\n")
+
+# Interpretation
+if (probability < 0.05) {
+  cat("A flood level of 0.60 million cubic feet per second is unusual for this gamma distribution.\n")
+} else {
+  cat("A flood level of 0.60 million cubic feet per second is not unusual for this gamma distribution.\n")
+}
+
+```
+
+# Problem 3 (5.60)
+
+1. **Mean of Reaction Time for Both Formulas**
+
+   \[
+   \text{Mean} = \alpha \cdot \beta
+   \]
+
+2. **Variance of Reaction Time for Both Formulas**
+
+   \[
+   \text{Variance} = \alpha \cdot \beta^2
+   \]
+
+3. **Probability of Reaction in Less Than 1 Minute**
+
+   For formula A:
+   \[
+   P(Y < 1) = F(1)
+   \]
+
+   For formula B:
+   \[
+   P(Y < 1) = F(1)
+   \]
+
+```{r}
+# Parameters for gamma distributions
+alpha_A <- 2
+beta_A <- 2
+alpha_B <- 1
+beta_B <- 4
+
+# Part (a): Mean for both distributions
+mean_A <- alpha_A * beta_A
+mean_B <- alpha_B * beta_B
+
+cat("Mean for formula A:", mean_A, "\n")
+cat("Mean for formula B:", mean_B, "\n")
+
+# Part (b): Variance for both distributions
+variance_A <- alpha_A * beta_A^2
+variance_B <- alpha_B * beta_B^2
+
+cat("Variance for formula A:", variance_A, "\n")
+cat("Variance for formula B:", variance_B, "\n")
+
+# Part (c): Probability of reaction in less than 1 minute
+time_threshold <- 1  # 1 minute
+
+# Probability for formula A
+prob_A <- pgamma(time_threshold, shape = alpha_A, scale = beta_A, lower.tail = TRUE)
+cat("Probability of reaction in less than 1 minute for formula A:", round(prob_A, 4), "\n")
+
+# Probability for formula B
+prob_B <- pgamma(time_threshold, shape = alpha_B, scale = beta_B, lower.tail = TRUE)
+cat("Probability of reaction in less than 1 minute for formula B:", round(prob_B, 4), "\n")
+
+# Determine which formula has the higher probability
+if (prob_A > prob_B) {
+  cat("Formula A has a higher probability of generating a reaction in less than 1 minute.\n")
+} else if (prob_B > prob_A) {
+  cat("Formula B has a higher probability of generating a reaction in less than 1 minute.\n")
+} else {
+  cat("Both formulas have the same probability of generating a reaction in less than 1 minute.\n")
+}
+```
+
+# Problem 4 (5.74)
+
+1. **Proportion of Machines Needing Repair Within 2 Years**
+
+   \[
+   P(Y \leq 2) = F(2)
+   \]
+
+2. **Mean and Variance of the Weibull Distribution**
+
+   \[
+   \text{Mean} = \beta \cdot \Gamma\left(1 + \frac{1}{\alpha}\right)
+   \]
+   \[
+   \text{Variance} = \beta^2 \left[\Gamma\left(1 + \frac{2}{\alpha}\right) - \left(\Gamma\left(1 + \frac{1}{\alpha}\right)\right)^2\right]
+   \]
+
+3. **Probability Interval**
+
+   \[
+   P(\mu - 2\sigma \leq Y \leq \mu + 2\sigma)
+   \]
+
+4. **Probability of Exceeding 6 Years**
+
+   \[
+   P(Y > 6) = 1 - F(6)
+   \]
+
+
+```{r}
+# Parameters for Weibull distribution
+alpha <- 2  # shape parameter
+beta <- 4   # scale parameter
+
+# Part (a): Proportion needing repair within 2 years
+time_threshold <- 2
+prob_under_warranty <- pweibull(time_threshold, shape = alpha, scale = beta, lower.tail = TRUE)
+cat("Proportion of machines needing repair within 2 years:", round(prob_under_warranty, 4), "\n")
+
+# Part (b): Mean and standard deviation
+mean_repair_time <- beta * gamma(1 + 1 / alpha)
+variance_repair_time <- (beta^2) * (gamma(1 + 2 / alpha) - (gamma(1 + 1 / alpha))^2)
+sd_repair_time <- sqrt(variance_repair_time)
+
+cat("Mean repair time:", round(mean_repair_time, 4), "\n")
+cat("Standard deviation of repair time:", round(sd_repair_time, 4), "\n")
+
+# Part (c): Probability interval P(mu - 2 * sigma <= Y <= mu + 2 * sigma)
+lower_bound <- mean_repair_time - 2 * sd_repair_time
+upper_bound <- mean_repair_time + 2 * sd_repair_time
+prob_interval <- pweibull(upper_bound, shape = alpha, scale = beta) - pweibull(lower_bound, shape = alpha, scale = beta)
+
+cat("Probability that Y is within two standard deviations of the mean:", round(prob_interval, 4), "\n")
+
+# Part (d): Probability that Y exceeds 6 years
+time_threshold_6 <- 6
+prob_exceeds_6 <- pweibull(time_threshold_6, shape = alpha, scale = beta, lower.tail = FALSE)
+cat("Probability that Y exceeds 6 years:", round(prob_exceeds_6, 4), "\n")
+
+
+```
+# Problem 5 (5.84)
+
+1. **Mean and Variance of \( Y \)**
+
+   For a Beta distribution with parameters \( \alpha \) and \( \beta \), the mean and variance are given by:
+
+   \[
+   \text{Mean} = \frac{\alpha}{\alpha + \beta}
+   \]
+   \[
+   \text{Variance} = \frac{\alpha \cdot \beta}{(\alpha + \beta)^2 \cdot (\alpha + \beta + 1)}
+   \]
+
+2. **Probability that at Least 40% of the Budget is Used**
+
+   Find the probability that \( Y \geq 0.4 \):
+
+   \[
+   P(Y \geq 0.4) = 1 - F(0.4)
+   \]
+
+   where \( F(y) \) is the cumulative distribution function of the Beta distribution.
+
+3. **Probability that at Most 10% of the Budget is Used**
+
+   Find the probability that \( Y \leq 0.1 \):
+
+   \[
+   P(Y \leq 0.1) = F(0.1)
+   \]
+```{r}
+# Parameters for the beta distribution
+alpha <- 2
+beta <- 9
+
+# Part (a): Mean and Variance of Y
+mean_Y <- alpha / (alpha + beta)
+variance_Y <- (alpha * beta) / ((alpha + beta)^2 * (alpha + beta + 1))
+
+cat("Mean of Y:", round(mean_Y, 4), "\n")
+cat("Variance of Y:", round(variance_Y, 4), "\n")
+
+# Part (b): Probability that Y is at least 40%
+prob_at_least_40 <- pbeta(0.4, shape1 = alpha, shape2 = beta, lower.tail = FALSE)
+cat("Probability that at least 40% of the budget is used:", round(prob_at_least_40, 4), "\n")
+
+# Part (c): Probability that Y is at most 10%
+prob_at_most_10 <- pbeta(0.1, shape1 = alpha, shape2 = beta, lower.tail = TRUE)
+cat("Probability that at most 10% of the budget is used:", round(prob_at_most_10, 4), "\n")
+
+```
+# Problem 6 (5.114)
+
+1. **Parameters \(\alpha\) and \(\beta\)**
+
+   From the given probability density function, identify:
+   
+   \[
+   \alpha = 2
+   \]
+   \[
+   \beta = 4
+   \]
+
+2. **Mean and Variance of \( Y \)**
+
+   For a Weibull distribution with parameters \( \alpha \) and \( \beta \), the mean and variance are given by:
+
+   \[
+   \text{Mean} = \beta \cdot \Gamma\left(1 + \frac{1}{\alpha}\right)
+   \]
+   \[
+   \text{Variance} = \beta^2 \left[\Gamma\left(1 + \frac{2}{\alpha}\right) - \left(\Gamma\left(1 + \frac{1}{\alpha}\right)\right)^2\right]
+   \]
+
+3. **Probability of Lasting at Least 6 Years**
+
+   Find the probability that \( Y \geq 6 \):
+
+   \[
+   P(Y \geq 6) = 1 - F(6)
+   \]
+
+   where \( F(y) \) is the cumulative distribution function of the Weibull distribution.
+```{r}
+# Parameters for the Weibull distribution
+alpha <- 2  # shape parameter
+beta <- 4   # scale parameter
+
+# Part (b): Mean and Variance of Y
+mean_Y <- beta * gamma(1 + 1 / alpha)
+variance_Y <- (beta^2) * (gamma(1 + 2 / alpha) - (gamma(1 + 1 / alpha))^2)
+
+cat("Mean of Y:", round(mean_Y, 4), "\n")
+cat("Variance of Y:", round(variance_Y, 4), "\n")
+
+# Part (c): Probability that Y lasts at least 6 years
+time_threshold <- 6
+probability <- pweibull(time_threshold, shape = alpha, scale = beta, lower.tail = FALSE)
+cat("Probability that a memory chip lasts at least 6 years:", round(probability, 4), "\n")
+
+```
+
+# Problem 7 (6.2)
+
+1. **Joint Probability Distribution \( p(x, y) \)**
+
+   The joint probability distribution for two independent dice rolls is given by:
+
+   \[
+   p(x, y) = \frac{1}{36}
+   \]
+
+   for each combination of \( x \) and \( y \), where \( x, y \in \{1, 2, 3, 4, 5, 6\} \).
+
+2. **Marginal Probability Distributions \( p_1(x) \) and \( p_2(y) \)**
+
+   The marginal distribution of \( X \) is calculated by summing over all values of \( Y \):
+
+   \[
+   p_1(x) = \sum_{y=1}^{6} p(x, y)
+   \]
+
+   Similarly, the marginal distribution of \( Y \) is:
+
+   \[
+   p_2(y) = \sum_{x=1}^{6} p(x, y)
+   \]
+
+3. **Conditional Probability Distributions \( p_1(x | y) \) and \( p_2(y | x) \)**
+
+   The conditional probability distribution of \( X \) given \( Y = y \) is:
+
+   \[
+   p_1(x | y) = \frac{p(x, y)}{p_2(y)}
+   \]
+
+   The conditional probability distribution of \( Y \) given \( X = x \) is:
+
+   \[
+   p_2(y | x) = \frac{p(x, y)}{p_1(x)}
+   \]
+
+4. **Observations**
+
+   By comparing the marginal and conditional distributions, one can observe that the events \( X \) and \( Y \) are independent since the marginal distribution of one variable is not affected by the value of the other variable.
+
+```{r}
+# Define the sample space for two dice (1 to 6 for each die)
+dice <- 1:6
+
+# Part (a): Joint probability distribution p(x, y)
+# Since each pair (x, y) has equal probability 1/36, create a 6x6 matrix filled with 1/36
+joint_prob <- matrix(1/36, nrow = 6, ncol = 6)
+
+# Display the joint probability table
+cat("Joint Probability Distribution p(x, y):\n")
+print(joint_prob)
+
+# Part (b): Marginal distributions p1(x) and p2(y)
+# Since the dice are fair and independent, the marginal distribution is the sum across rows and columns
+marginal_x <- rowSums(joint_prob)  # Sum across rows to get p1(x)
+marginal_y <- colSums(joint_prob)  # Sum across columns to get p2(y)
+
+cat("Marginal Probability Distribution p1(x):", marginal_x, "\n")
+cat("Marginal Probability Distribution p2(y):", marginal_y, "\n")
+
+# Part (c): Conditional distributions p1(x | y) and p2(y | x)
+# Conditional probability p1(x | y) = p(x, y) / p2(y), and similarly for p2(y | x)
+
+
+conditional_x_given_y <- sweep(joint_prob, 2, marginal_y, "/")  # Conditional on Y
+conditional_y_given_x <- sweep(joint_prob, 1, marginal_x, "/")  # Conditional on X
+
+cat("Conditional Probability Distribution p1(x | y):\n")
+print(conditional_x_given_y)
+
+cat("Conditional Probability Distribution p2(y | x):\n")
+print(conditional_y_given_x)
+
+```
+
+# Problem 8 (6.4)
+
+
+1. **Bivariate Probability Distribution \( p(x, y) \)**
+
+   The joint probability distribution \( p(x, y) \) is the probability of selecting a particle with energy level \( X = x \) and time period \( Y = y \). It is calculated as:
+
+   \[
+   p(x, y) = \frac{\text{Number of particles with } X = x \text{ and } Y = y}{N}
+   \]
+
+   where \( N = 7 \) is the total number of particles.
+
+2. **Marginal Probability Distributions \( p_1(x) \) and \( p_2(y) \)**
+
+   The marginal distribution of \( X \), \( p_1(x) \), is obtained by summing \( p(x, y) \) over all values of \( Y \):
+
+   \[
+   p_1(x) = \sum_{y} p(x, y)
+   \]
+
+   Similarly, the marginal distribution of \( Y \), \( p_2(y) \), is obtained by summing \( p(x, y) \) over all values of \( X \):
+
+   \[
+   p_2(y) = \sum_{x} p(x, y)
+   \]
+
+3. **Conditional Probability Distribution \( p_2(y | x) \)**
+
+   The conditional probability distribution of \( Y \) given \( X = x \), \( p_2(y | x) \), is defined as:
+
+   \[
+   p_2(y | x) = \frac{p(x, y)}{p_1(x)}
+   \]
+
+   where \( p_1(x) \) is the marginal distribution of \( X \).
+```{r}
+# Data based on the table
+data <- data.frame(
+  ParticleID = 1:7,
+  EnergyLevel = c(3, 1, 3, 2, 3, 3, 2),
+  TimePeriod = c(1, 1, 3, 1, 2, 2, 1)
+)
+
+# Total number of particles
+N <- nrow(data)
+
+# Part (a): Joint probability distribution p(x, y)
+joint_prob <- table(data$EnergyLevel, data$TimePeriod) / N
+cat("Joint Probability Distribution p(x, y):\n")
+print(joint_prob)
+
+# Part (b): Marginal distribution p1(x) - sum across TimePeriod (columns)
+marginal_x <- rowSums(joint_prob)
+cat("Marginal Probability Distribution p1(x):", marginal_x, "\n")
+
+# Part (c): Marginal distribution p2(y) - sum across EnergyLevel (rows)
+marginal_y <- colSums(joint_prob)
+cat("Marginal Probability Distribution p2(y):", marginal_y, "\n")
+
+# Part (d): Conditional probability distribution p2(y | x)
+conditional_y_given_x <- joint_prob / marginal_x
+cat("Conditional Probability Distribution p2(y | x):\n")
+print(conditional_y_given_x)
+
+```
+
+# Problem 9 (6.12)
+
+Given the joint probability density function:
+
+\[
+f(x, y) = \frac{e^{-y/10}}{10y}, \quad 0 < y < x < 2y
+\]
+
+1. **Finding the Marginal Density \( f(y) \)**
+
+   To find the marginal density function \( f(y) \), integrate \( f(x, y) \) over \( x \) within the range \( y < x < 2y \):
+
+   \[
+   f(y) = \int_{y}^{2y} \frac{e^{-y/10}}{10y} \, dx
+   \]
+
+   Simplify the integral to obtain \( f(y) \) as a function of \( y \).
+
+2. **Expected Value \( E(Y) \)**
+
+   The expected value \( E(Y) \) is calculated as follows:
+
+   \[
+   E(Y) = \int_{0}^{\infty} y \cdot f(y) \, dy
+   \]
+
+   Substitute the expression for \( f(y) \) and evaluate the integral to find \( E(Y) \).
+   
+```{r}
+# Define the joint probability density function f(x, y)
+joint_density <- function(x, y) {
+  ifelse(0 < y & y < x & x < 2 * y, exp(-y / 10) / (10 * y), 0)
+}
+
+# Part (a): Marginal density function f(y) by integrating over x
+marginal_density_y <- function(y) {
+  sapply(y, function(yi) {
+    integrate(function(x) joint_density(x, yi), lower = yi, upper = 2 * yi)$value
+  })
+}
+
+# Part (b): Expected value E(Y) by integrating y * f(y) over y from 0 to infinity
+expected_value_Y <- integrate(function(y) y * marginal_density_y(y), lower = 0, upper = Inf)$value
+
+# Output the expected value
+cat("Expected value E(Y):", expected_value_Y, "\n")
+
+```
+
+# Problem 10 (6.14)
+
+
+Given the joint density function:
+
+\[
+f(x, y) = 
+\begin{cases}
+    c e^{-x^2}, & 0 \leq y \leq x; \; 0 \leq x < \infty \\
+    0, & \text{elsewhere}
+\end{cases}
+\]
+
+1. **Finding the Value of \( c \)**
+
+   To make \( f(x, y) \) a valid probability density function:
+
+   \[
+   \int_{0}^{\infty} \int_{0}^{x} f(x, y) \, dy \, dx = 1
+   \]
+
+   Substituting \( f(x, y) = c e^{-x^2} \), solve for \( c \) so that the integral equals 1.
+
+2. **Marginal Density of \( X \), \( f_1(x) \)**
+
+   The marginal density \( f_1(x) \) is obtained by integrating \( f(x, y) \) over \( y \):
+
+   \[
+   f_1(x) = \int_{0}^{x} c e^{-x^2} \, dy = c x e^{-x^2}
+   \]
+
+  Verify that \( f_1(x) \) integrates to 1:
+
+   \[
+   \int_{0}^{\infty} f_1(x) \, dx = 1
+   \]
+
+3. **Conditional Density \( f(y | x) \)**
+
+   The conditional density \( f(y | x) \) is defined as:
+
+   \[
+   f(y | x) = \frac{f(x, y)}{f_1(x)} = \frac{1}{x} \quad \text{for } 0 \leq y \leq x
+   \]
+
+   This shows that \( f(y | x) \) is a uniform distribution over the interval \( 0 \leq Y \leq X \).
+   
+```{r}
+
+# Define the joint density function f(x, y) with the parameter c_value
+joint_density <- function(x, y, c) {
+  ifelse(0 <= y & y <= x & x >= 0, c * exp(-x^2), 0)
+}
+
+# Part (a): Calculate the value of c by setting the integral equal to 1
+# Define the function to integrate for calculating c
+integral_function <- function(x) {
+  x * exp(-x^2)
+}
+
+# Compute the integral from 0 to infinity
+integral_result <- integrate(integral_function, lower = 0, upper = Inf)$value
+
+# Solve for c by setting the total integral to 1
+c_value <- 1 / integral_result
+cat("Value of c:", c_value, "\n")
+
+# Part (b): Define the marginal density of X, f1(x), using the calculated c
+marginal_density_x <- function(x) {
+  sapply(x, function(xi) {
+    integrate(function(y) joint_density(xi, y, c_value), lower = 0, upper = xi)$value
+  })
+}
+
+# Verify that f1(x) integrates to 1 over the range [0, Inf]
+integral_f1_x <- integrate(function(x) marginal_density_x(x), lower = 0, upper = Inf)$value
+cat("Integral of f1(x) over all x:", integral_f1_x, "\n")
+
+# Part (c): Define the conditional density f(y | x) to show it's uniform over [0, x]
+conditional_density_y_given_x <- function(y, x) {
+  ifelse(0 <= y & y <= x, 1 / x, 0)
+}
+cat("Conditional density f(y | x) is defined as a uniform distribution over [0, x].\n")
+
+```
+
+# Problem 11 (6.51)
+
+1. **Covariance of \( X \) and \( Y \)**
+
+   The covariance of \( X \) and \( Y \) is given by:
+
+   \[
+   \text{Cov}(X, Y) = E[(X - E[X])(Y - E[Y])] = E[XY] - E[X]E[Y]
+   \]
+
+2. **Expectation of \( X \)**
+
+   The expectation of \( X \) is calculated as:
+
+   \[
+   E[X] = \sum_x x \cdot P(X = x)
+   \]
+
+3. **Expectation of \( Y \)**
+
+   The expectation of \( Y \) is calculated as:
+
+   \[
+   E[Y] = \sum_y y \cdot P(Y = y)
+   \]
+
+4. **Expectation of \( XY \)**
+
+   The expectation of the product \( XY \) is:
+
+   \[
+   E[XY] = \sum_x \sum_y x \cdot y \cdot P(X = x, Y = y)
+   \]
+
+5. **Covariance Formula Expanded**
+
+   Substituting the expectations into the covariance formula:
+
+   \[
+   \text{Cov}(X, Y) = E[XY] - E[X]E[Y]
+   \]
+
+6. **Dependency Check**
+
+   To determine if \( X \) and \( Y \) are dependent, compare the joint probability \( P(X = x, Y = y) \) with the product of the marginal probabilities \( P(X = x) \cdot P(Y = y) \) for each \( x, y \) pair. If there exists any pair \( (x, y) \) for which:
+
+   \[
+   P(X = x, Y = y) \neq P(X = x) \cdot P(Y = y)
+   \]
+
+   then \( X \) and \( Y \) are dependent.
+```{r}
+# Define the joint probability table as a matrix
+joint_probs <- matrix(c(1/12, 2/12, 1/12,
+                        2/12, 0,    2/12,
+                        1/12, 2/12, 1/12), 
+                      nrow = 3, byrow = TRUE)
+
+# Define the values of X and Y
+x_values <- c(-1, 0, 1)
+y_values <- c(-1, 0, 1)
+
+# Calculate E[X]
+E_X <- sum(x_values * rowSums(joint_probs))
+
+# Calculate E[Y]
+E_Y <- sum(y_values * colSums(joint_probs))
+
+# Calculate E[XY]
+E_XY <- sum(outer(x_values, y_values, "*") * joint_probs)
+
+# Calculate Cov(X, Y)
+cov_XY <- E_XY - E_X * E_Y
+cat("Cov(X, Y):", cov_XY, "\n")
+
+# Check for dependency by comparing P(X = x, Y = y) with P(X = x) * P(Y = y)
+# Calculate marginal probabilities
+P_X <- rowSums(joint_probs)
+P_Y <- colSums(joint_probs)
+
+# Create a matrix of independent probabilities P(X) * P(Y)
+indep_probs <- outer(P_X, P_Y)
+
+# Check if any joint probability differs from the product of marginals
+dependent <- any(abs(joint_probs - indep_probs) > 1e-6)
+cat("Are X and Y dependent?", dependent, "\n")
+
+```
+
+# Problem 12 (6.74)
+
+Given that \( Y \) follows a uniform distribution from 1 to 3 parts per million:
+
+1. **Mean of the Sample Mean \( \bar{Y} \)**
+
+   Since \( Y \sim \text{Uniform}(1, 3) \), the population mean \( E(Y) \) is:
+
+   \[
+   E(Y) = \frac{a + b}{2} = \frac{1 + 3}{2} = 2
+   \]
+
+   Therefore, the expected value of the sample mean \( \bar{Y} \) is also:
+
+   \[
+   E(\bar{Y}) = E(Y) = 2
+   \]
+
+2. **Variance of the Sample Mean \( \bar{Y} \)**
+
+   For a uniform distribution, the variance of \( Y \) is:
+
+   \[
+   \text{Var}(Y) = \frac{(b - a)^2}{12} = \frac{(3 - 1)^2}{12} = \frac{4}{12} = \frac{1}{3}
+   \]
+
+   Since we are dealing with the sample mean of \( n = 60 \) reservoirs, the variance of \( \bar{Y} \) is:
+
+   \[
+   \text{Var}(\bar{Y}) = \frac{\text{Var}(Y)}{n} = \frac{1/3}{60} = \frac{1}{180} \approx 0.0056
+   \]
+
+3. **Shape of the Sampling Distribution of \( \bar{Y} \)**
+
+   By the Central Limit Theorem, the sampling distribution of \( \bar{Y} \) will be approximately normal because the sample size \( n = 60 \) is large.
+
+4. **Probability that \( \bar{Y} \) is between 1.5 ppm and 2.5 ppm**
+
+   Since \( \bar{Y} \) is approximately normal with mean \( E(\bar{Y}) = 2 \) and variance \( \text{Var}(\bar{Y}) = 0.0056 \), standardize to find this probability:
+
+   \[
+   P(1.5 \leq \bar{Y} \leq 2.5) = P\left(\frac{1.5 - 2}{\sqrt{0.0056}} \leq Z \leq \frac{2.5 - 2}{\sqrt{0.0056}}\right)
+   \]
+
+5. **Probability that \( \bar{Y} \) exceeds 2.2 ppm**
+
+   Similarly, calculate:
+
+   \[
+   P(\bar{Y} > 2.2) = P\left(Z > \frac{2.2 - 2}{\sqrt{0.0056}}\right)
+   \]
+```{r}
+# Given parameters
+a <- 1
+b <- 3
+n <- 60
+
+# Part (a): E(Y)
+E_Y <- (a + b) / 2
+cat("E(Y):", E_Y, "\n")
+
+# Part (b): Var(Y) and Var(Y-bar)
+Var_Y <- (b - a)^2 / 12
+Var_Y_bar <- Var_Y / n
+cat("Var(Y):", Var_Y, "\n")
+cat("Var(Y-bar):", Var_Y_bar, "\n")
+
+# Part (d): Probability that Y-bar is between 1.5 and 2.5
+mean_Y_bar <- E_Y
+sd_Y_bar <- sqrt(Var_Y_bar)
+
+prob_between <- pnorm(2.5, mean = mean_Y_bar, sd = sd_Y_bar) - pnorm(1.5, mean = mean_Y_bar, sd = sd_Y_bar)
+cat("P(1.5 <= Y-bar <= 2.5):", prob_between, "\n")
+
+# Part (e): Probability that Y-bar exceeds 2.2
+prob_exceeds <- 1 - pnorm(2.2, mean = mean_Y_bar, sd = sd_Y_bar)
+cat("P(Y-bar > 2.2):", prob_exceeds, "\n")
+
+```
+
+# Problem 13 (6.90)
+
+1. **Normal Approximation to the Binomial**
+
+   For a binomial random variable \( X \sim \text{Binomial}(n, p) \), the mean and variance are:
+
+   \[
+   \mu = E[X] = n \cdot p = 20 \cdot 0.40 = 8
+   \]
+   \[
+   \sigma^2 = \text{Var}(X) = n \cdot p \cdot (1 - p) = 20 \cdot 0.40 \cdot 0.60 = 4.8
+   \]
+   \[
+   \sigma = \sqrt{4.8} \approx 2.19
+   \]
+
+   The normal approximation to the binomial can be applied with a continuity correction.
+
+2. **Part (a): Probability that fewer than 2 pieces exceed the FDA limit**
+
+   Using the normal approximation:
+
+   \[
+   P(X < 2) \approx P\left(Z < \frac{2 - 0.5 - 8}{\sqrt{4.8}}\right)
+   \]
+
+3. **Part (b): Probability that more than 10 pieces exceed the FDA limit**
+
+   Using the normal approximation:
+
+   \[
+   P(X > 10) \approx P\left(Z > \frac{10 + 0.5 - 8}{\sqrt{4.8}}\right)
+   \]
+
+4. **Part (c): Exact Binomial Probabilities**
+
+   The exact probabilities can be calculated directly using the binomial distribution:
+
+   \[
+   P(X < 2) = \sum_{k=0}^{1} \binom{20}{k} p^k (1 - p)^{20 - k}
+   \]
+
+   \[
+   P(X > 10) = \sum_{k=11}^{20} \binom{20}{k} p^k (1 - p)^{20 - k}
+   \]
+
+  Compare these results with the normal approximation to see if it provides a good estimate.
+```{r}
+# Given parameters
+n <- 20
+p <- 0.40
+mean_X <- n * p
+sd_X <- sqrt(n * p * (1 - p))
+
+# Part (a): Normal approximation for P(X < 2) with continuity correction
+x_a <- 2 - 0.5
+z_a <- (x_a - mean_X) / sd_X
+prob_a_normal <- pnorm(z_a)
+cat("Normal approximation for P(X < 2):", prob_a_normal, "\n")
+
+# Part (b): Normal approximation for P(X > 10) with continuity correction
+x_b <- 10 + 0.5
+z_b <- (x_b - mean_X) / sd_X
+prob_b_normal <- 1 - pnorm(z_b)
+cat("Normal approximation for P(X > 10):", prob_b_normal, "\n")
+
+# Part (c): Exact binomial probabilities
+# Exact P(X < 2)
+prob_a_exact <- pbinom(1, size = n, prob = p)
+cat("Exact binomial probability for P(X < 2):", prob_a_exact, "\n")
+
+# Exact P(X > 10)
+prob_b_exact <- 1 - pbinom(10, size = n, prob = p)
+cat("Exact binomial probability for P(X > 10):", prob_b_exact, "\n")
+
+# Comparison
+cat("Comparison:\n")
+cat("Normal approximation for P(X < 2):", prob_a_normal, "\n")
+cat("Exact binomial probability for P(X < 2):", prob_a_exact, "\n")
+cat("Normal approximation for P(X > 10):", prob_b_normal, "\n")
+cat("Exact binomial probability for P(X > 10):", prob_b_exact, "\n")
+
+```
+
+# Problem 14 (7.108)
+
+1. **99% Confidence Interval Formula**
+
+   For a small sample size, the 99% confidence interval for the mean \( \mu \) of a normally distributed population is given by:
+
+   \[
+   \bar{x} \pm t_{\alpha/2, \, n-1} \cdot \frac{s}{\sqrt{n}}
+   \]
+
+   where:
+   - \( \bar{x} \) is the sample mean,
+   - \( s \) is the sample standard deviation,
+   - \( n \) is the sample size,
+   - \( t_{\alpha/2, \, n-1} \) is the critical value from the \( t \)-distribution for a 99% confidence level with \( n-1 \) degrees of freedom.
+
+2. **Interpretation of Confidence Intervals**
+
+   The 99% confidence intervals provide a range in which we are 99% confident that the true mean lead and copper levels in the water specimens lie.
+
+3. **Meaning of "99% Confident"**
+
+  "99% confident" means that if we were to take many random samples and calculate confidence intervals for each, approximately 99% of those intervals would contain the true population mean.
+```{r}
+# Sample data for lead and copper levels
+lead_levels <- c(1.32, 0, 13.1, 0.919, 0.657, 3.0, 1.32, 4.09, 4.45, 0)
+copper_levels <- c(0.508, 0.279, 0.320, 0.904, 0.221, 0.283, 0.475, 0.130, 0.220, 0.743)
+
+# Confidence level
+conf_level <- 0.99
+alpha <- 1 - conf_level
+n <- length(lead_levels)
+
+# Part (a): 99% confidence interval for the mean lead level
+mean_lead <- mean(lead_levels)
+sd_lead <- sd(lead_levels)
+t_critical_lead <- qt(1 - alpha / 2, df = n - 1)
+margin_of_error_lead <- t_critical_lead * (sd_lead / sqrt(n))
+ci_lead <- c(mean_lead - margin_of_error_lead, mean_lead + margin_of_error_lead)
+cat("99% Confidence Interval for mean lead level:", ci_lead, "\n")
+
+# Part (b): 99% confidence interval for the mean copper level
+mean_copper <- mean(copper_levels)
+sd_copper <- sd(copper_levels)
+t_critical_copper <- qt(1 - alpha / 2, df = n - 1)
+margin_of_error_copper <- t_critical_copper * (sd_copper / sqrt(n))
+ci_copper <- c(mean_copper - margin_of_error_copper, mean_copper + margin_of_error_copper)
+cat("99% Confidence Interval for mean copper level:", ci_copper, "\n")
+
+# Part (c) and (d): Interpretation
+cat("Interpretation:\n")
+cat("We are 99% confident that the true mean lead level is between", ci_lead[1], "and", ci_lead[2], "µg/L.\n")
+cat("We are 99% confident that the true mean copper level is between", ci_copper[1], "and", ci_copper[2], "mg/L.\n")
+cat("This means that if we were to take many such samples and construct confidence intervals, approximately 99% of those intervals would contain the true population mean.\n")
+
+```
+
+# Problem 15 (7.114)
+
+Given paired observations \( X_i \) (St. Joseph, Missouri) and \( Y_i \) (Iowa Great Lakes), the difference \( D_i = X_i - Y_i \) is calculated for each pair.
+
+1. **Mean Difference**: Calculate the sample mean of the differences:
+
+   \[
+   \bar{D} = \frac{1}{n} \sum_{i=1}^n D_i
+   \]
+
+2. **Standard Deviation of the Differences**: Calculate the sample standard deviation of the differences:
+
+   \[
+   s_D = \sqrt{\frac{1}{n - 1} \sum_{i=1}^n (D_i - \bar{D})^2}
+   \]
+
+3. **95% Confidence Interval for the Mean Difference**:
+
+   The 95% confidence interval for the mean difference \( \mu_D \) is given by:
+
+   \[
+   \bar{D} \pm t_{\alpha/2, \, n-1} \cdot \frac{s_D}{\sqrt{n}}
+   \]
+
+   where:
+   - \( \bar{D} \) is the mean of the differences,
+   - \( s_D \) is the standard deviation of the differences,
+   - \( n \) is the number of pairs,
+   - \( t_{\alpha/2, \, n-1} \) is the critical value from the \( t \)-distribution for a 95% confidence level with \( n-1 \) degrees of freedom.
+   
+```{r}
+# Data for solar irradiation levels
+st_joseph <- c(782, 965, 948, 1181, 1414, 1633, 1852)
+iowa_great_lakes <- c(593, 672, 750, 988, 1226, 1462, 1698)
+
+# Calculate the differences
+differences <- st_joseph - iowa_great_lakes
+
+# Sample size
+n <- length(differences)
+
+# Mean and standard deviation of the differences
+mean_diff <- mean(differences)
+sd_diff <- sd(differences)
+
+# Confidence level
+conf_level <- 0.95
+alpha <- 1 - conf_level
+
+# Critical value from t-distribution
+t_critical <- qt(1 - alpha / 2, df = n - 1)
+
+# Margin of error
+margin_of_error <- t_critical * (sd_diff / sqrt(n))
+
+# 95% Confidence interval for the mean difference
+ci_diff <- c(mean_diff - margin_of_error, mean_diff + margin_of_error)
+cat("95% Confidence Interval for the mean difference:", ci_diff, "\n")
+
+# Interpretation of results
+cat("Interpretation:\n")
+cat("95% confident that the true mean difference in day-long clear-sky solar irradiation levels between St. Joseph and Iowa Great Lakes is between", ci_diff[1], "and", ci_diff[2], "BTU/sq. ft.\n")
+```
+
+# Problem 16 (7.116)
+
+Given paired observations \( X_i \) (daytime residue) and \( Y_i \) (nighttime residue), the difference \( D_i = X_i - Y_i \) is calculated for each pair.
+
+1. **Mean Difference**: Calculate the sample mean of the differences:
+
+   \[
+   \bar{D} = \frac{1}{n} \sum_{i=1}^n D_i
+   \]
+
+2. **Standard Deviation of the Differences**: Calculate the sample standard deviation of the differences:
+
+   \[
+   s_D = \sqrt{\frac{1}{n - 1} \sum_{i=1}^n (D_i - \bar{D})^2}
+   \]
+
+3. **90% Confidence Interval for the Mean Difference**:
+
+   The 90% confidence interval for the mean difference \( \mu_D \) is given by:
+
+   \[
+   \bar{D} \pm t_{\alpha/2, \, n-1} \cdot \frac{s_D}{\sqrt{n}}
+   \]
+
+   where:
+   - \( \bar{D} \) is the mean of the differences,
+   - \( s_D \) is the standard deviation of the differences,
+   - \( n \) is the number of pairs,
+   - \( t_{\alpha/2, \, n-1} \) is the critical value from the \( t \)-distribution for a 90% confidence level with \( n-1 \) degrees of freedom.
+```{r}
+# Data for diazinon residue levels (mg/m^3)
+day_residue <- c(5.4, 2.7, 34.2, 19.9, 2.4, 7.0, 6.1, 7.7, 18.4, 27.1, 16.9)
+night_residue <- c(24.3, 16.5, 47.2, 12.4, 24.0, 21.6, 104.3, 96.9, 105.3, 78.7, 44.6)
+
+# Calculate the differences
+differences <- day_residue - night_residue
+
+# Sample size
+n <- length(differences)
+
+# Mean and standard deviation of the differences
+mean_diff <- mean(differences)
+sd_diff <- sd(differences)
+
+# Confidence level
+conf_level <- 0.90
+alpha <- 1 - conf_level
+
+# Critical value from t-distribution
+t_critical <- qt(1 - alpha / 2, df = n - 1)
+
+# Margin of error
+margin_of_error <- t_critical * (sd_diff / sqrt(n))
+
+# 90% Confidence interval for the mean difference
+ci_diff <- c(mean_diff - margin_of_error, mean_diff + margin_of_error)
+cat("90% Confidence Interval for the mean difference:", ci_diff, "\n")
+
+# Part (b): Assumptions
+cat("Assumptions for the validity of the confidence interval:\n")
+cat("- The differences in diazinon levels (day vs. night) are normally distributed.\n")
+cat("- The data points (differences) are independent of each other.\n")
+
+# Part (c): Interpretation
+cat("Interpretation:\n")
+cat("90% confident that the true mean difference in diazinon residue levels (day minus night) lies between", 
+    ci_diff[1], "and", ci_diff[2], "mg/m^3.\n")
+
+```
+```{r}
+
+# Parameters for the binomial distribution
+n <- 10
+p <- 0.5
+
+# Calculate the mean and standard deviation for the normal approximation
+mean <- n * p
+sd <- sqrt(n * p * (1 - p))
+
+# Using continuity correction, we approximate P(T < 7) as P(T < 7.5)
+x <- 7.5
+
+# Calculate the probability using the normal approximation
+probability <- pnorm(x, mean = mean, sd = sd)
+probability <- round(probability, 4)  # Round to 4 decimal places
+
+# Display the result
+print(probability)
+
+```
+
